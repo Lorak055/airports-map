@@ -51,6 +51,12 @@
     .p-sub{color:var(--muted);margin:.25rem 0 .5rem}
     .p-badges{margin:.35rem 0 .6rem}
     .p-note{color:var(--muted);font-size:.9rem;margin:.3rem 0 .8rem}
+  body.light{--bg:#f6f7fb;--panel:#ffffff;--text:#0e132a;--muted:#5b678a;--accent:#326dff}
+    .plane-icon{display:inline-block}
+    .plane-icon svg{display:block}
+    body.light .legend{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.06)}
+    .p-image{border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12);margin:.5rem 0 .8rem}
+    .p-image img{display:block;width:100%;height:auto}
   </style>
 </head>
 <body>
@@ -69,6 +75,7 @@
           <option value="Oceania">Oceania</option>
         </select>
         <button id="reset">Reset</button>
+        <button id="theme-toggle" title="Toggle light/dark">Theme</button>
       </div>
       <div class="meta">Public map · Leaflet</div>
     </header>
@@ -81,10 +88,12 @@
       </div>
       <div class="panel-body">
         <div class="p-sub" id="p-location"></div>
+        <div class="p-image" id="p-image" style="display:none"></div>
         <div class="p-badges">
           <span class="badge" id="p-iata"></span>
           <span class="badge" id="p-icao"></span>
           <span class="badge" id="p-status"></span>
+          <span class="badge" id="p-flag"></span>
         </div>
         <div id="p-note" class="p-note"></div>
         <p id="p-linkwrap"></p>
@@ -149,7 +158,19 @@
     const plannedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
 
     function makePlannedIcon(){
-      return L.divIcon({ className:'planned-icon', html:'<div class="planned-dot"></div>', iconSize:[18,18], iconAnchor:[9,9] });
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'>
+        <path d='M2 16l9-4 9 4-9 5-9-5z' fill='#e53935'/>
+        <path d='M11 3h2v9h-2z' fill='#e53935'/>
+      </svg>`;
+      return L.divIcon({ className:'plane-icon', html: svg, iconSize:[24,24], iconAnchor:[12,12] });
+    }
+    function makePrintedIcon(){
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'>
+        <path d='M2 16l9-4 9 4-9 5-9-5z' fill='#3b82f6'/>
+        <path d='M11 3h2v9h-2z' fill='#3b82f6'/>
+      </svg>`;
+      return L.divIcon({ className:'plane-icon', html: svg, iconSize:[24,24], iconAnchor:[12,12] });
+    });
     }
 
     // Continent mapping by country name (fast + simple)
@@ -166,6 +187,31 @@
 
     const allLatLngs=[];
 
+    // Theme toggle
+    (function(){
+      const btn = document.getElementById('theme-toggle');
+      const key = 'airport-theme';
+      const saved = localStorage.getItem(key);
+      if(saved==='light') document.body.classList.add('light');
+      if(btn){ btn.addEventListener('click', ()=>{
+        document.body.classList.toggle('light');
+        localStorage.setItem(key, document.body.classList.contains('light') ? 'light' : 'dark');
+        setTimeout(()=> map.invalidateSize(), 120);
+      }); }
+    })();
+
+    // Flags (basic mapping for your countries)
+    function countryToCode(country){
+      const m = {
+        'USA':'US','United States':'US','Germany':'DE','Italy':'IT','Australia':'AU','France':'FR','Netherlands':'NL','United Kingdom':'GB','UK':'GB','Spain':'ES','Switzerland':'CH','Austria':'AT','Turkey':'TR','Thailand':'TH','Japan':'JP','China':'CN','Qatar':'QA','UAE':'AE','United Arab Emirates':'AE','Maldives':'MV','South Korea':'KR','Canada':'CA','Singapore':'SG'
+      };
+      return m[country]||null;
+    }
+    function codeToFlag(cc){
+      if(!cc) return '';
+      return cc.replace(/./g, c => String.fromCodePoint(127397 + c.toUpperCase().charCodeAt(0)) );
+    }
+
     // ===== Info panel helpers =====
     const panel = document.getElementById('info-panel');
     const pTitle = document.getElementById('p-title');
@@ -180,24 +226,35 @@
 
     function showPanel(ap){
       pTitle.textContent = ap.name || 'Airport';
-      pLoc.textContent = `${ap.city || ''}${ap.city?', ':''}${ap.country||''}`;
-      pIata.textContent = `IATA: ${ap.iata || '-'}`;
-      pIcao.textContent = `ICAO: ${ap.icao || '-'}`;
-      pStatus.textContent = `Status: ${ap.status || 'unknown'}`;
-      pNote.textContent = ap.note ? String(ap.note) : '';
-      if(ap.makerUrl && ap.makerUrl !== '#'){
+      pLoc.textContent   = `${ap.city||''}${ap.city?', ':''}${ap.country||''}`;
+      pIata.textContent  = `IATA: ${ap.iata||'-'}`;
+      pIcao.textContent  = `ICAO: ${ap.icao||'-'}`;
+      pStatus.textContent= `Status: ${ap.status||'unknown'}`;
+      const cc = countryToCode(ap.country||'');
+      const flag = codeToFlag(cc||'');
+      const flagEl = document.getElementById('p-flag');
+      if(flagEl) flagEl.textContent = flag || '';
+      pNote.textContent  = ap.note ? String(ap.note) : '';
+      if (ap.imageUrl){
+        const wrap = document.getElementById('p-image');
+        wrap.style.display='block';
+        wrap.innerHTML = `<img alt="${ap.name}" src="${ap.imageUrl}">`;
+      } else {
+        const wrap = document.getElementById('p-image');
+        if(wrap){ wrap.style.display='none'; wrap.innerHTML=''; }
+      }
+      if (ap.makerUrl && ap.makerUrl !== '#') {
         pLinkWrap.innerHTML = `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`;
       } else {
         pLinkWrap.innerHTML = '';
       }
-      panel.classList.add('open');
-      panel.setAttribute('aria-hidden','false');
+      panel.classList.add('open'); panel.setAttribute('aria-hidden','false');
     }
 
     // Printed markers
     AIRPORTS.forEach(ap=>{
       if(typeof ap.lat!=='number'||typeof ap.lng!=='number') return;
-      const m=L.marker([ap.lat,ap.lng]);
+      const m=L.marker([ap.lat,ap.lng],{icon:makePrintedIcon()});
       const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
       const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: printed</span></div>${link}</div>`;
       m.bindPopup(popup);
@@ -244,7 +301,7 @@
       const bounds=[];
 
       listPrinted.forEach(ap=>{
-        const m=L.marker([ap.lat,ap.lng]);
+        const m=L.marker([ap.lat,ap.lng],{icon:makePrintedIcon()});
         const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
         const popup=`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: printed</span></div>${link}</div>`;
         m.bindPopup(popup);
