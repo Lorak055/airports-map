@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Karol’s 3D-Printed Airports – Interactive Map</title>
+  <title>Karols 3D‑gedruckte Flughäfen – Interaktive Karte</title>
   <meta name="description" content="Interaktive Weltkarte aller bereits gedruckten Flughäfen mit Infos und Direktlinks zu MakerWorld." />
 
   <!-- Leaflet CSS -->
@@ -41,20 +41,34 @@
     .popup a:hover { text-decoration: underline; }
     .badge { display: inline-block; padding: .15rem .45rem; border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; font-size: .75rem; color: var(--muted); margin-right: .35rem; }
     .footer { position: absolute; right: 10px; bottom: 12px; background: rgba(18,23,43,0.8); color: var(--muted); padding: .35rem .6rem; border-radius: 8px; font-size: .8rem; z-index: 400; }
+  .planned-dot{width:18px;height:18px;border-radius:50%;background:#e53935;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(229,57,53,.35);} 
+  .planned-dot{width:18px;height:18px;border-radius:50%;background:#e53935;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(229,57,53,.35);} 
+    .printed-dot{width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(59,130,246,.35);} 
+    .legend{ background: rgba(18,23,43,0.85); color: var(--text); padding: .5rem .7rem; border-radius: 8px; font-size: .85rem; line-height: 1.2; border: 1px solid rgba(255,255,255,0.1);} 
+    .legend-row{ display:flex; align-items:center; gap:.5rem; margin:.2rem 0; }
   </style>
 </head>
 <body>
   <div class="app">
     <header>
-      <h1>Karol’s 3D-Printed Airports – Interactive Map</h1>
+      <h1>Karol’s 3D‑printed Airports</h1>
       <div class="controls">
-        <input id="search" type="search" placeholder="Suche: Stadt, IATA, ICAO" />
+        <input id="search" type="search" placeholder="Search: City, IATA, ICAO" />
+        <select id="continent" aria-label="Filter by continent">
+          <option value="all" selected>All continents</option>
+          <option value="Africa">Africa</option>
+          <option value="Asia">Asia</option>
+          <option value="Europe">Europe</option>
+          <option value="North America">North America</option>
+          <option value="South America">South America</option>
+          <option value="Oceania">Oceania</option>
+        </select>
         <button id="reset">Reset</button>
       </div>
-      <div class="meta">Public Map · Leaflet ·GB</div>
+      <div class="meta">Public map · Leaflet</div>
     </header>
     <div id="map"></div>
-    <div class="footer">Tip: Click on a marker for details & MakerWorld link</div>
+    <div class="footer">Tip: Click any marker for details & MakerWorld link</div>
   </div>
 
   <!-- Leaflet JS -->
@@ -67,17 +81,44 @@
     // Fülle die makerUrl mit deinem echten MakerWorld-Link.
     // Wenn kein Link existiert, lass es auf "#" stehen.
     const AIRPORTS = [
-      { name: 'New York – John F. Kennedy', iata: 'JFK', icao: 'KJFK', city: 'New York', country: 'USA', lat: 40.6413, lng: -73.7781, makerUrl: 'https://makerworld.com/de/models/1637593-new-york-intl-airport-kjfk-jfk#profileId-1730048' },
-      { name: 'Washington Dulles', iata: 'IAD', icao: 'KIAD', city: 'Washington, DC', country: 'USA', lat: 38.9531, lng: -77.4565, makerUrl: 'https://makerworld.com/de/models/1571994-washington-intl-airport-kiad-iad#profileId-1653452' },
-      { name: 'Brescia Montichiari', iata: 'VBS', icao: 'LIPO', city: 'Brescia', country: 'Italien', lat: 45.4289, lng: 10.3306, makerUrl: 'https://makerworld.com/de/models/1571987-brescia-montichiari-airport-lipo-vbs#profileId-1653442' },
-      { name: 'Seattle–Tacoma', iata: 'SEA', icao: 'KSEA', city: 'Seattle', country: 'USA', lat: 47.4502, lng: -122.3088, makerUrl: 'https://makerworld.com/de/models/1499239-seattle-intl-airport-ksea-sea#profileId-1568169' },
-      { name: 'Los Angeles', iata: 'LAX', icao: 'KLAX', city: 'Los Angeles', country: 'USA', lat: 33.9416, lng: -118.4085, makerUrl: 'https://makerworld.com/de/models/1499198-los-angeles-intl-airport-klax-lax#profileId-1568122' },
-      { name: 'Frankfurt Main', iata: 'FRA', icao: 'EDDF', city: 'Frankfurt', country: 'Deutschland', lat: 50.0379, lng: 8.5622, makerUrl: 'https://makerworld.com/de/models/1499159-frankfurt-intl-airport-eddf-fra#profileId-1568074' },
-      { name: 'San Francisco', iata: 'SFO', icao: 'KSFO', city: 'San Francisco', country: 'USA', lat: 37.6213, lng: -122.3790, makerUrl: 'https://makerworld.com/de/models/1437390-san-francisco-intl-airport-ksfo-sfo#profileId-1495606' },
-      { name: 'Munich', iata: 'MUC', icao: 'EDDM', city: 'München', country: 'Deutschland', lat: 48.3538, lng: 11.7861, makerUrl: 'https://makerworld.com/de/models/1433941-munich-airport-eddm-muc-runway-layout#profileId-1491535' },
-      { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australien', lat: -34.9450, lng: 138.5306, makerUrl: 'https://makerworld.com/de/models/1828920-adelaide-intl-airport-ypad-adl#profileId-1952744' },
-      { name: 'Farmingdale – Republic', iata: 'FRG', icao: 'KFRG', city: 'Farmingdale, NY', country: 'USA', lat: 40.7288, lng: -73.4134, makerUrl: 'https://makerworld.com/de/models/1828845-republic-airport-kfrg-frg#profileId-1952656' },
-      { name: 'Orlando', iata: 'MCO', icao: 'KMCO', city: 'Orlando', country: 'USA', lat: 28.4312, lng: -81.3081, makerUrl: 'https://makerworld.com/de/models/1828907-orlando-intl-airport-kmco-mco#profileId-1952728' },
+      { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australien', lat: -34.9450, lng: 138.5306, makerUrl: '#' },
+      { name: 'Orlando', iata: 'MCO', icao: 'KMCO', city: 'Orlando', country: 'USA', lat: 28.4312, lng: -81.3081, makerUrl: '#' },
+      { name: 'Farmingdale – Republic', iata: 'FRG', icao: 'KFRG', city: 'Farmingdale, NY', country: 'USA', lat: 40.7288, lng: -73.4134, makerUrl: '#' },
+      { name: 'New York – John F. Kennedy', iata: 'JFK', icao: 'KJFK', city: 'New York', country: 'USA', lat: 40.6413, lng: -73.7781, makerUrl: '#' },
+      { name: 'Washington Dulles', iata: 'IAD', icao: 'KIAD', city: 'Washington, DC', country: 'USA', lat: 38.9531, lng: -77.4565, makerUrl: '#' },
+      { name: 'Brescia Montichiari', iata: 'VBS', icao: 'LIPO', city: 'Brescia', country: 'Italien', lat: 45.4289, lng: 10.3306, makerUrl: '#' },
+      { name: 'Seattle–Tacoma', iata: 'SEA', icao: 'KSEA', city: 'Seattle', country: 'USA', lat: 47.4502, lng: -122.3088, makerUrl: '#' },
+      { name: 'Los Angeles', iata: 'LAX', icao: 'KLAX', city: 'Los Angeles', country: 'USA', lat: 33.9416, lng: -118.4085, makerUrl: '#' },
+      { name: 'Frankfurt Main', iata: 'FRA', icao: 'EDDF', city: 'Frankfurt', country: 'Deutschland', lat: 50.0379, lng: 8.5622, makerUrl: '#' },
+      { name: 'München', iata: 'MUC', icao: 'EDDM', city: 'München', country: 'Deutschland', lat: 48.3538, lng: 11.7861, makerUrl: '#' },
+      { name: 'San Francisco', iata: 'SFO', icao: 'KSFO', city: 'San Francisco', country: 'USA', lat: 37.6213, lng: -122.3790, makerUrl: '#' },
+    ];
+
+    // ====== NEU: Geplante Flughäfen (werden mit rotem Marker angezeigt) ======
+    // Trage hier die Airports ein, die demnächst erscheinen sollen.
+    // Beispiel-Einträge (Platzhalter-Koordinaten/Links):
+    const PLANNED_AIRPORTS = [
+      { name: 'Salt Lake City', iata: 'SLC', icao: 'KSLC', city: 'Salt Lake City', country: 'USA', lat: 40.7899, lng: -111.9791, note: 'Bald verfügbar' },
+      { name: 'Bangkok – Suvarnabhumi', iata: 'BKK', icao: 'VTBS', city: 'Bangkok', country: 'Thailand', lat: 13.6900, lng: 100.7501, note: 'Bald verfügbar' },
+      { name: 'Tokio – Haneda', iata: 'HND', icao: 'RJTT', city: 'Tokio', country: 'Japan', lat: 35.5494, lng: 139.7798, note: 'Bald verfügbar' },
+      { name: 'Peking – Daxing', iata: 'PKX', icao: 'ZBAD', city: 'Peking', country: 'China', lat: 39.5099, lng: 116.4108, note: 'Bald verfügbar' },
+      { name: 'Istanbul – Flughafen Istanbul', iata: 'IST', icao: 'LTFM', city: 'Istanbul', country: 'Türkei', lat: 41.2622, lng: 28.7278, note: 'Bald verfügbar' },
+      { name: 'Paris – Charles de Gaulle', iata: 'CDG', icao: 'LFPG', city: 'Paris', country: 'Frankreich', lat: 49.0097, lng: 2.5479, note: 'Bald verfügbar' },
+      { name: 'Amsterdam – Schiphol', iata: 'AMS', icao: 'EHAM', city: 'Amsterdam', country: 'Niederlande', lat: 52.3105, lng: 4.7683, note: 'Bald verfügbar' },
+      { name: 'Hannover', iata: 'HAJ', icao: 'EDDV', city: 'Hannover', country: 'Deutschland', lat: 52.4611, lng: 9.6850, note: 'Bald verfügbar' },
+      { name: 'Barcelona – El Prat', iata: 'BCN', icao: 'LEBL', city: 'Barcelona', country: 'Spanien', lat: 41.2971, lng: 2.0785, note: 'Bald verfügbar' },
+      { name: 'Zürich', iata: 'ZRH', icao: 'LSZH', city: 'Zürich', country: 'Schweiz', lat: 47.4647, lng: 8.5492, note: 'Bald verfügbar' },
+      { name: 'Sydney – Kingsford Smith', iata: 'SYD', icao: 'YSSY', city: 'Sydney', country: 'Australien', lat: -33.9399, lng: 151.1753, note: 'Bald verfügbar' },
+      { name: 'Singapur – Changi', iata: 'SIN', icao: 'WSSS', city: 'Singapur', country: 'Singapur', lat: 1.3644, lng: 103.9915, note: 'Bald verfügbar' },
+      { name: 'Cincinnati/Northern Kentucky', iata: 'CVG', icao: 'KCVG', city: 'Cincinnati', country: 'USA', lat: 39.0488, lng: -84.6678, note: 'Bald verfügbar' },
+      { name: 'Berlin – Brandenburg', iata: 'BER', icao: 'EDDB', city: 'Berlin', country: 'Deutschland', lat: 52.3667, lng: 13.5033, note: 'Bald verfügbar' },
+      { name: 'London – Heathrow', iata: 'LHR', icao: 'EGLL', city: 'London', country: 'Vereinigtes Königreich', lat: 51.4700, lng: -0.4543, note: 'Bald verfügbar' },
+      { name: 'Dubai – International', iata: 'DXB', icao: 'OMDB', city: 'Dubai', country: 'Vereinigte Arabische Emirate', lat: 25.2532, lng: 55.3657, note: 'Bald verfügbar' },
+      { name: 'Doha – Hamad International', iata: 'DOH', icao: 'OTHH', city: 'Doha', country: 'Katar', lat: 25.2731, lng: 51.6081, note: 'Bald verfügbar' },
+      { name: 'Malé – Velana International', iata: 'MLE', icao: 'VRMM', city: 'Malé', country: 'Malediven', lat: 4.1918, lng: 73.5291, note: 'Bald verfügbar' },
+      { name: 'Seoul – Incheon', iata: 'ICN', icao: 'RKSI', city: 'Incheon/Seoul', country: 'Südkorea', lat: 37.4602, lng: 126.4407, note: 'Bald verfügbar' },
+      { name: 'Honolulu – Daniel K. Inouye', iata: 'HNL', icao: 'PHNL', city: 'Honolulu', country: 'USA', lat: 21.3245, lng: -157.9251, note: 'Bald verfügbar' },
+      { name: 'Toronto – Pearson', iata: 'YYZ', icao: 'CYYZ', city: 'Toronto', country: 'Kanada', lat: 43.6777, lng: -79.6248, note: 'Bald verfügbar' },
     ];
 
     // ====== Karte initialisieren ======
@@ -87,19 +128,41 @@
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> Mitwirkende'
     }).addTo(map);
 
-    // Marker Cluster Gruppe
-    const markers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
+    // Marker Cluster Gruppen
+    const printedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
+    const plannedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
 
-    // Icon optional anpassen (hier Standard belassen)
+    // Icon für geplante Flughäfen (roter, runder Div-Icon Marker)
+    function makePlannedIcon() {
+      return L.divIcon({
+        className: 'planned-icon',
+        html: '<div class="planned-dot"></div>',
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+      });
+    }
 
-    // Marker hinzufügen
-    const latlngs = [];
+    // Continent mapping (simple by country name)
+    function getContinent(country){
+      const c = (country||'').toLowerCase();
+      if (/usa|vereinigte staaten|united states|kanada|canada|mexiko|mexico/.test(c)) return 'North America';
+      if (/brasil|argentin|chile|peru|colombi|ecuador|bolivi|uruguay|paraguay|south america/.test(c)) return 'South America';
+      if (/deutschland|germany|frankreich|france|niederlande|netherlands|italien|italy|spanien|spain|schweiz|switzerland|österreich|austria|vereinigtes königreich|united kingdom|uk|türkei|turkey|polen|czech|belg|dänemark|norway|sweden|finnland|portugal|ireland|holland|europe|niederlande/.test(c)) return 'Europe';
+      if (/australien|australia|neuseeland|new zealand|oceania/.test(c)) return 'Oceania';
+      if (/china|japan|korea|südkorea|south korea|singapur|singapore|thailand|katar|qatar|vereinigte arabische emirate|united arab emirates|uae|maldiv|malé|istanbul|türkei|turkey|doha|dubai|beijing|tokio|tokyo|bangkok|asien|asia/.test(c)) return 'Asia';
+      if (/afrika|africa|egypt|kenya|nigeria|south africa|maroc|morocco|ghana|ethiopia|tanzania/.test(c)) return 'Africa';
+      return 'Other';
+    });
+    }
+
+    // Marker hinzufügen (GEDRUCKT)
+    const allLatLngs = [];
     AIRPORTS.forEach(ap => {
       if (typeof ap.lat !== 'number' || typeof ap.lng !== 'number') return;
       const m = L.marker([ap.lat, ap.lng]);
       const link = ap.makerUrl && ap.makerUrl !== '#' 
-        ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Jetzt drucken →</a>`
-        : `<span class="badge">MakerWorld‑Link folgt</span>`;
+        ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`
+        : `<span class="badge">MakerWorld link coming soon</span>`;
       const popup = `
         <div class="popup">
           <h3>${ap.name}</h3>
@@ -107,19 +170,66 @@
           <div style="margin:.35rem 0 .5rem;">
             <span class="badge">IATA: ${ap.iata}</span>
             <span class="badge">ICAO: ${ap.icao}</span>
+            <span class="badge">Status: printed</span>
           </div>
           ${link}
         </div>`;
       m.bindPopup(popup);
-      m.apData = ap; // für Suche
-      markers.addLayer(m);
-      latlngs.push([ap.lat, ap.lng]);
+      m.apData = { ...ap, status: 'printed', continent: getContinent(ap.country) };
+      printedMarkers.addLayer(m);
+      allLatLngs.push([ap.lat, ap.lng]);
+    });
+      allLatLngs.push([ap.lat, ap.lng]);
     });
 
-    map.addLayer(markers);
+    // Marker hinzufügen (GEPLANT)
+    PLANNED_AIRPORTS.forEach(ap => {
+      if (typeof ap.lat !== 'number' || typeof ap.lng !== 'number') return;
+      const m = L.marker([ap.lat, ap.lng], { icon: makePlannedIcon() });
+      const note = ap.note ? `<div class="sub" style="margin-top:.2rem">${ap.note}</div>` : '';
+      const popup = `
+        <div class="popup">
+          <h3>${ap.name}</h3>
+          <div class="sub">${ap.city}, ${ap.country}</div>
+          <div style="margin:.35rem 0 .5rem;">
+            <span class="badge">IATA: ${ap.iata}</span>
+            <span class="badge">ICAO: ${ap.icao}</span>
+            <span class="badge">Status: planned</span>
+          </div>
+          <span class="badge">Coming soon</span>
+          ${note}
+        </div>`;
+      m.bindPopup(popup);
+      m.apData = { ...ap, status: 'planned', continent: getContinent(ap.country) };
+      plannedMarkers.addLayer(m);
+      allLatLngs.push([ap.lat, ap.lng]);
+    });
 
-    if (latlngs.length) {
-      map.fitBounds(latlngs, { padding: [30, 30] });
+    // Legend
+    const Legend = L.Control.extend({
+      options: { position: 'bottomleft' },
+      onAdd: function(){
+        const div = L.DomUtil.create('div', 'legend');
+        div.innerHTML = `
+          <div style="font-weight:600;margin-bottom:.3rem;">Legend</div>
+          <div class="legend-row"><span class="printed-dot"></span> Printed</div>
+          <div class="legend-row"><span class="planned-dot"></span> Planned</div>
+        `;
+        return div;
+      }
+    });
+    map.addControl(new Legend());
+      allLatLngs.push([ap.lat, ap.lng]);
+    });
+
+    map.addLayer(printedMarkers);
+    map.addLayer(plannedMarkers);
+
+    // Layer-Control zum Ein-/Ausblenden
+    L.control.layers({}, { 'Gedruckt': printedMarkers, 'Geplant (rot)': plannedMarkers }, { collapsed: false }).addTo(map);
+
+    if (allLatLngs.length) {
+      map.fitBounds(allLatLngs, { padding: [30, 30] });
     } else {
       map.setView([20, 0], 2);
     }
@@ -128,16 +238,59 @@
     const searchInput = document.getElementById('search');
     const resetBtn = document.getElementById('reset');
 
-    function applyFilter(term) {
-      const q = (term || '').trim().toLowerCase();
-      markers.clearLayers();
-      const filtered = [];
-      AIRPORTS.forEach(ap => {
-        const hay = `${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase();
-        if (!q || hay.includes(q)) filtered.push(ap);
+    function rebuildLayersFrom(listPrinted, listPlanned){
+      printedMarkers.clearLayers();
+      plannedMarkers.clearLayers();
+      const bounds = [];
+
+      listPrinted.forEach(ap => {
+        const m = L.marker([ap.lat, ap.lng]);
+        const link = ap.makerUrl && ap.makerUrl !== '#' 
+          ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`
+          : `<span class="badge">MakerWorld link coming soon</span>`;
+        const popup = `
+          <div class="popup">
+            <h3>${ap.name}</h3>
+            <div class="sub">${ap.city}, ${ap.country}</div>
+            <div style="margin:.35rem 0 .5rem;">
+              <span class="badge">IATA: ${ap.iata}</span>
+              <span class="badge">ICAO: ${ap.icao}</span>
+              <span class="badge">Status: printed</span>
+            </div>
+            ${link}
+          </div>`;
+        m.bindPopup(popup);
+        printedMarkers.addLayer(m);
+        bounds.push([ap.lat, ap.lng]);
       });
-      const newLatLngs = [];
-      filtered.forEach(ap => {
+
+      listPlanned.forEach(ap => {
+        const m = L.marker([ap.lat, ap.lng], { icon: makePlannedIcon() });
+        const note = ap.note ? `<div class=\"sub\" style=\"margin-top:.2rem\">${ap.note}</div>` : '';
+        const popup = `
+          <div class="popup">
+            <h3>${ap.name}</h3>
+            <div class="sub">${ap.city}, ${ap.country}</div>
+            <div style="margin:.35rem 0 .5rem;">
+              <span class="badge">IATA: ${ap.iata}</span>
+              <span class="badge">ICAO: ${ap.icao}</span>
+              <span class="badge">Status: planned</span>
+            </div>
+            <span class="badge">Coming soon</span>
+            ${note}
+          </div>`;
+        m.bindPopup(popup);
+        plannedMarkers.addLayer(m);
+        bounds.push([ap.lat, ap.lng]);
+      });
+
+      if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
+    }{
+      printedMarkers.clearLayers();
+      plannedMarkers.clearLayers();
+      const bounds = [];
+
+      listPrinted.forEach(ap => {
         const m = L.marker([ap.lat, ap.lng]);
         const link = ap.makerUrl && ap.makerUrl !== '#' 
           ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Jetzt drucken →</a>`
@@ -149,18 +302,62 @@
             <div style="margin:.35rem 0 .5rem;">
               <span class="badge">IATA: ${ap.iata}</span>
               <span class="badge">ICAO: ${ap.icao}</span>
+              <span class="badge">Status: gedruckt</span>
             </div>
             ${link}
           </div>`;
         m.bindPopup(popup);
-        markers.addLayer(m);
-        newLatLngs.push([ap.lat, ap.lng]);
+        printedMarkers.addLayer(m);
+        bounds.push([ap.lat, ap.lng]);
       });
-      if (newLatLngs.length) map.fitBounds(newLatLngs, { padding: [30, 30] });
+
+      listPlanned.forEach(ap => {
+        const m = L.marker([ap.lat, ap.lng], { icon: makePlannedIcon() });
+        const note = ap.note ? `<div class=\"sub\" style=\"margin-top:.2rem\">${ap.note}</div>` : '';
+        const popup = `
+          <div class="popup">
+            <h3>${ap.name}</h3>
+            <div class="sub">${ap.city}, ${ap.country}</div>
+            <div style="margin:.35rem 0 .5rem;">
+              <span class="badge">IATA: ${ap.iata}</span>
+              <span class="badge">ICAO: ${ap.icao}</span>
+              <span class="badge">Status: geplant</span>
+            </div>
+            <span class="badge">Bald verfügbar</span>
+            ${note}
+          </div>`;
+        m.bindPopup(popup);
+        plannedMarkers.addLayer(m);
+        bounds.push([ap.lat, ap.lng]);
+      });
+
+      if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
+    }
+
+    function applyFilter(term) {
+      const q = (term || '').trim().toLowerCase();
+      const cont = (document.getElementById('continent').value || 'all');
+      const bySearch = ap => `${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q);
+      const byCont = ap => cont === 'all' || getContinent(ap.country) === cont || (ap.continent && ap.continent === cont);
+
+      const filteredPrinted = AIRPORTS.filter(ap => bySearch(ap) && byCont(ap));
+      const filteredPlanned = PLANNED_AIRPORTS.filter(ap => bySearch(ap) && byCont(ap));
+      rebuildLayersFrom(filteredPrinted, filteredPlanned);
+    } {
+      const q = (term || '').trim().toLowerCase();
+      const filteredPrinted = AIRPORTS.filter(ap => `${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q));
+      const filteredPlanned = PLANNED_AIRPORTS.filter(ap => `${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q));
+      rebuildLayersFrom(filteredPrinted, filteredPlanned);
     }
 
     searchInput.addEventListener('input', (e) => applyFilter(e.target.value));
-    resetBtn.addEventListener('click', () => { searchInput.value = ''; applyFilter(''); });
+    resetBtn.addEventListener('click', () => { 
+      searchInput.value = ''; 
+      document.getElementById('continent').value = 'all';
+      applyFilter(''); 
+    });
+
+    document.getElementById('continent').addEventListener('change', () => applyFilter(searchInput.value)); });
 
     // ====== QS: offene Links in neuem Tab sichern (bereits im Link gesetzt) ======
   </script>
