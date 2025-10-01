@@ -36,11 +36,13 @@
     .badge{display:inline-block;padding:.15rem .45rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:.75rem;color:var(--muted);margin-right:.35rem}
     .footer{position:absolute;right:10px;bottom:12px;background:rgba(18,23,43,.8);color:var(--muted);padding:.35rem .6rem;border-radius:8px;font-size:.8rem;z-index:400}
 
-    .planned-dot{width:18px;height:18px;border-radius:50%;background:#e53935;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(229,57,53,.35)}
-    .printed-dot{width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(59,130,246,.35)}
     .legend{background:rgba(18,23,43,.85);color:var(--text);padding:.5rem .7rem;border-radius:8px;font-size:.85rem;line-height:1.2;border:1px solid rgba(255,255,255,.1)}
     .legend-row{display:flex;align-items:center;gap:.5rem;margin:.2rem 0}
-  .panel-open body{overflow:hidden}
+    .legend-swatch{width:14px;height:22px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.35);box-shadow:0 1px 0 rgba(255,255,255,.35) inset}
+    .swatch-blue{background:#2A81CB}
+    .swatch-red{background:#d63e2a}
+
+    .panel-open body{overflow:hidden}
     #info-panel{position:fixed;top:0;right:0;height:100vh;width:min(420px,92vw);background:var(--panel);color:var(--text);box-shadow:-12px 0 30px rgba(0,0,0,.35);transform:translateX(100%);transition:transform .28s ease;z-index:1000;border-left:1px solid rgba(255,255,255,.08)}
     #info-panel.open{transform:translateX(0)}
     #info-panel .panel-header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
@@ -51,15 +53,17 @@
     .p-sub{color:var(--muted);margin:.25rem 0 .5rem}
     .p-badges{margin:.35rem 0 .6rem}
     .p-note{color:var(--muted);font-size:.9rem;margin:.3rem 0 .8rem}
-  body.light{--bg:#f6f7fb;--panel:#ffffff;--text:#0e132a;--muted:#5b678a;--accent:#326dff}
-    .plane-icon{display:inline-block}
-    .plane-icon svg{display:block}
+
+    body.light{--bg:#f6f7fb;--panel:#ffffff;--text:#0e132a;--muted:#5b678a;--accent:#326dff}
     body.light .legend{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.06)}
     .p-image{border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12);margin:.5rem 0 .8rem}
     .p-image img{display:block;width:100%;height:auto}
+
+    #errorBanner{position:fixed;top:8px;left:8px;right:8px;background:#b91c1c;color:#fff;padding:8px 12px;border-radius:8px;z-index:2000;font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;white-space:pre-wrap;display:none}
   </style>
 </head>
 <body>
+  <pre id="errorBanner"></pre>
   <div class="app">
     <header>
       <h1>Karol’s 3D‑printed Airports</h1>
@@ -108,7 +112,38 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
-    // ====== DATA ======
+    // ==== Error banner (helps debug on GitHub Pages) ====
+    window.addEventListener('error', function(e){
+      var el=document.getElementById('errorBanner');
+      if(!el) return;
+      el.textContent = 'JS Error: ' + e.message + '\n' + (e.filename||'') + (e.lineno?(':'+e.lineno):'');
+      el.style.display='block';
+      console.error('[errorBanner]', e.message, e);
+    });
+
+    // ==== Colored standard Leaflet markers (blue/red) ====
+    const blueIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+
+    // ==== Map base ====
+    const map = L.map('map', { worldCopyJump: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    const printedMarkers = L.markerClusterGroup({ showCoverageOnHover:false, spiderfyOnMaxZoom:true });
+    const plannedMarkers = L.markerClusterGroup({ showCoverageOnHover:false, spiderfyOnMaxZoom:true });
+
+    // ==== Data (restored full lists) ====
     const AIRPORTS = [
       { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australia', lat: -34.9450, lng: 138.5306, makerUrl: '#' },
       { name: 'Orlando', iata: 'MCO', icao: 'KMCO', city: 'Orlando', country: 'USA', lat: 28.4312, lng: -81.3081, makerUrl: '#' },
@@ -147,81 +182,19 @@
       { name: 'Toronto – Pearson', iata: 'YYZ', icao: 'CYYZ', city: 'Toronto', country: 'Canada', lat: 43.6777, lng: -79.6248, note: 'Coming soon' },
     ];
 
-    // ====== MAP SETUP ======
-    const map = L.map('map', { worldCopyJump: true });
-    const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(map);
-
-    const printedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
-    const plannedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
-
-    function makePlaneIcon(color){
-      const svg = `
-        <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'>
-          <g fill='${color}'>
-            <!-- fuselage -->
-            <rect x='10.6' y='2' width='2.8' height='13.5' rx='1.1'/>
-            <!-- nose -->
-            <polygon points='12,2 13.6,4.2 10.4,4.2' />
-            <!-- wings -->
-            <polygon points='12,9 3,12.3 3,13.6 12,11.5 21,13.6 21,12.3' />
-            <!-- tailplane -->
-            <polygon points='12,6 7.2,7.8 7.2,9 12,7.7 16.8,9 16.8,7.8' />
-            <!-- tail fin -->
-            <polygon points='12,12.5 9.5,15.5 12,15 14.5,15.5' />
-          </g>
-        </svg>`;
-      return L.divIcon({ className:'plane-icon', html: svg, iconSize:[26,26], iconAnchor:[13,13] });
-    }
-    function makePrintedIcon(){ return null; }
-
-function makePlannedIcon(){ return null; });
-    });
-    });
-    }
-
-    // Continent mapping by country name (fast + simple)
+    // ==== Continent helper ====
     function getContinent(country){
       const c=(country||'').toLowerCase();
       if(/usa|united states|canada|mexico/.test(c)) return 'North America';
       if(/brazil|argentin|chile|peru|colombi|ecuador|bolivi|uruguay|paraguay/.test(c)) return 'South America';
-      if(/germany|france|netherlands|italy|spain|switzerland|austria|united kingdom|uk|turkey|poland|czech|belg|denmark|norway|sweden|finland|portugal|ireland|netherlands|holland/.test(c)) return 'Europe';
+      if(/germany|france|netherlands|italy|spain|switzerland|austria|united kingdom|uk|turkey|poland|czech|belg|denmark|norway|sweden|finland|portugal|ireland|holland/.test(c)) return 'Europe';
       if(/australia|new zealand/.test(c)) return 'Oceania';
       if(/china|japan|korea|singapore|thailand|qatar|united arab emirates|uae|maldives|istanbul|doha|dubai|beijing|tokyo|bangkok|south korea/.test(c)) return 'Asia';
       if(/egypt|kenya|nigeria|south africa|morocco|ghana|ethiopia|tanzania/.test(c)) return 'Africa';
       return 'Other';
     }
 
-    const allLatLngs=[];
-
-    // Theme toggle
-    (function(){
-      const btn = document.getElementById('theme-toggle');
-      const key = 'airport-theme';
-      const saved = localStorage.getItem(key);
-      if(saved==='light') document.body.classList.add('light');
-      if(btn){ btn.addEventListener('click', ()=>{
-        document.body.classList.toggle('light');
-        localStorage.setItem(key, document.body.classList.contains('light') ? 'light' : 'dark');
-        setTimeout(()=> map.invalidateSize(), 120);
-      }); }
-    })();
-
-    // Flags (basic mapping for your countries)
-    function countryToCode(country){
-      const m = {
-        'USA':'US','United States':'US','Germany':'DE','Italy':'IT','Australia':'AU','France':'FR','Netherlands':'NL','United Kingdom':'GB','UK':'GB','Spain':'ES','Switzerland':'CH','Austria':'AT','Turkey':'TR','Thailand':'TH','Japan':'JP','China':'CN','Qatar':'QA','UAE':'AE','United Arab Emirates':'AE','Maldives':'MV','South Korea':'KR','Canada':'CA','Singapore':'SG'
-      };
-      return m[country]||null;
-    }
-    function codeToFlag(cc){
-      if(!cc) return '';
-      return cc.replace(/./g, c => String.fromCodePoint(127397 + c.toUpperCase().charCodeAt(0)) );
-    }
-
-    // ===== Info panel helpers =====
+    // ==== Info panel wiring ====
     const panel = document.getElementById('info-panel');
     const pTitle = document.getElementById('p-title');
     const pLoc = document.getElementById('p-location');
@@ -231,7 +204,7 @@ function makePlannedIcon(){ return null; });
     const pNote = document.getElementById('p-note');
     const pLinkWrap = document.getElementById('p-linkwrap');
     document.getElementById('p-close').addEventListener('click',()=>{ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); });
-    if (map && map.on) { map.on('click', ()=>{ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); }); }
+    map.on('click', ()=>{ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); });
 
     function showPanel(ap){
       pTitle.textContent = ap.name || 'Airport';
@@ -239,104 +212,64 @@ function makePlannedIcon(){ return null; });
       pIata.textContent  = `IATA: ${ap.iata||'-'}`;
       pIcao.textContent  = `ICAO: ${ap.icao||'-'}`;
       pStatus.textContent= `Status: ${ap.status||'unknown'}`;
-      const cc = countryToCode(ap.country||'');
-      const flag = codeToFlag(cc||'');
-      const flagEl = document.getElementById('p-flag');
-      if(flagEl) flagEl.textContent = flag || '';
       pNote.textContent  = ap.note ? String(ap.note) : '';
-      if (ap.imageUrl){
-        const wrap = document.getElementById('p-image');
-        wrap.style.display='block';
-        wrap.innerHTML = `<img alt="${ap.name}" src="${ap.imageUrl}">`;
-      } else {
-        const wrap = document.getElementById('p-image');
-        if(wrap){ wrap.style.display='none'; wrap.innerHTML=''; }
-      }
       if (ap.makerUrl && ap.makerUrl !== '#') {
         pLinkWrap.innerHTML = `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`;
-      } else {
-        pLinkWrap.innerHTML = '';
-      }
+      } else { pLinkWrap.innerHTML = ''; }
       panel.classList.add('open'); panel.setAttribute('aria-hidden','false');
     }
 
-    // Printed markers
+    // ==== Build markers ====
+    const allLatLngs=[];
+
     AIRPORTS.forEach(ap=>{
-      if(typeof ap.lat!=='number'||typeof ap.lng!=='number') return;
-      const m=L.marker([ap.lat, ap.lng]);
+      const m=L.marker([ap.lat,ap.lng],{icon:blueIcon});
       const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
       const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: printed</span></div>${link}</div>`;
-      m.bindPopup(popup);
-      m.apData={...ap,status:'printed',continent:getContinent(ap.country)};
-      printedMarkers.addLayer(m);
-      m.on('click', ()=> showPanel(m.apData));
+      m.bindPopup(popup); m.apData={...ap,status:'printed',continent:getContinent(ap.country)};
+      printedMarkers.addLayer(m); m.on('click',()=>showPanel(m.apData));
       allLatLngs.push([ap.lat,ap.lng]);
     });
 
-    // Planned markers
     PLANNED_AIRPORTS.forEach(ap=>{
-      if(typeof ap.lat!=='number'||typeof ap.lng!=='number') return;
-      const m=L.marker([ap.lat, ap.lng]);
+      const m=L.marker([ap.lat,ap.lng],{icon:redIcon});
       const note=ap.note?`<div class="sub" style="margin-top:.2rem">${ap.note}</div>`:'';
       const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div><span class="badge">Coming soon</span>${note}</div>`;
-      m.bindPopup(popup);
-      m.apData={...ap,status:'planned',continent:getContinent(ap.country)};
-      plannedMarkers.addLayer(m);
-      m.on('click', ()=> showPanel(m.apData));
+      m.bindPopup(popup); m.apData={...ap,status:'planned',continent:getContinent(ap.country)};
+      plannedMarkers.addLayer(m); m.on('click',()=>showPanel(m.apData));
       allLatLngs.push([ap.lat,ap.lng]);
     });
 
     map.addLayer(printedMarkers);
     map.addLayer(plannedMarkers);
 
-    // Layers toggle
-    L.control.layers({}, { 'Printed': printedMarkers, 'Planned (red)': plannedMarkers }, { collapsed: false }).addTo(map);
-
-    // Fit bounds
+    // ==== Fit & legend & layers ====
     if(allLatLngs.length) map.fitBounds(allLatLngs,{padding:[30,30]}); else map.setView([20,0],2);
 
-    // Legend
-    const Legend=L.Control.extend({options:{position:'bottomleft'},onAdd:function(){const div=L.DomUtil.create('div','legend');div.innerHTML=`<div style="font-weight:600;margin-bottom:.3rem;">Legend</div><div class="legend-row"><span class="printed-dot"></span> Printed</div><div class="legend-row"><span class="planned-dot"></span> Planned</div>`;return div;}});
+    const Legend=L.Control.extend({options:{position:'bottomleft'},onAdd:function(){const div=L.DomUtil.create('div','legend');div.innerHTML=`<div style="font-weight:600;margin-bottom:.3rem;">Legend</div><div class="legend-row"><span class="legend-swatch swatch-blue"></span> Printed (blue)</div><div class="legend-row"><span class="legend-swatch swatch-red"></span> Planned (red)</div>`;return div;}});
     map.addControl(new Legend());
 
-    // Search + Continent filter
+    L.control.layers({}, { 'Printed (Blue)': printedMarkers, 'Planned (Red)': plannedMarkers }, { collapsed: false }).addTo(map);
+
+    // ==== Search + Continent filter ====
     const searchInput=document.getElementById('search');
     const resetBtn=document.getElementById('reset');
     const continentSel=document.getElementById('continent');
 
     function rebuildLayersFrom(listPrinted,listPlanned){
-      printedMarkers.clearLayers();
-      plannedMarkers.clearLayers();
+      printedMarkers.clearLayers(); plannedMarkers.clearLayers();
       const bounds=[];
-
-      listPrinted.forEach(ap=>{
-        const m=L.marker([ap.lat, ap.lng]);
-        const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
-        const popup=`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: printed</span></div>${link}</div>`;
-        m.bindPopup(popup);
-        printedMarkers.addLayer(m);
-        m.on('click', ()=> showPanel({ ...ap, status: 'printed' }));
-        bounds.push([ap.lat,ap.lng]);
-      });
-
-      listPlanned.forEach(ap=>{
-        const m=L.marker([ap.lat, ap.lng]);
-        const note=ap.note?`<div class=\"sub\" style=\"margin-top:.2rem\">${ap.note}</div>`:'';
-        const popup=`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: planned</span></div><span class=\"badge\">Coming soon</span>${note}</div>`;
-        m.bindPopup(popup);
-        plannedMarkers.addLayer(m);
-        m.on('click', ()=> showPanel({ ...ap, status: 'planned' }));
-        bounds.push([ap.lat,ap.lng]);
-      });
-
+      listPrinted.forEach(ap=>{ const m=L.marker([ap.lat,ap.lng],{icon:blueIcon}); m.bindPopup(`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: printed</span></div></div>`); printedMarkers.addLayer(m); m.on('click',()=>showPanel({...ap,status:'printed'})); bounds.push([ap.lat,ap.lng]); });
+      listPlanned.forEach(ap=>{ const m=L.marker([ap.lat,ap.lng],{icon:redIcon}); m.bindPopup(`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: planned</span></div><span class=\"badge\">Coming soon</span></div>`); plannedMarkers.addLayer(m); m.on('click',()=>showPanel({...ap,status:'planned'})); bounds.push([ap.lat,ap.lng]); });
       if(bounds.length) map.fitBounds(bounds,{padding:[30,30]});
     }
 
+    function getCont(ap){ return ap.continent || getContinent(ap.country); }
     function applyFilter(term){
       const q=(term||'').trim().toLowerCase();
       const cont=(continentSel.value||'all');
       const bySearch=ap=>`${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q);
-      const byCont=ap=>cont==='all'||getContinent(ap.country)===cont||ap.continent===cont;
+      const byCont=ap=>cont==='all'||getCont(ap)===cont;
       const filteredPrinted=AIRPORTS.filter(ap=>bySearch(ap)&&byCont(ap));
       const filteredPlanned=PLANNED_AIRPORTS.filter(ap=>bySearch(ap)&&byCont(ap));
       rebuildLayersFrom(filteredPrinted,filteredPlanned);
@@ -346,22 +279,29 @@ function makePlannedIcon(){ return null; });
     continentSel.addEventListener('change', ()=>applyFilter(searchInput.value));
     resetBtn.addEventListener('click', ()=>{ searchInput.value=''; continentSel.value='all'; applyFilter(''); });
 
-    // Ensure proper sizing on first paint (mobile/Safari)
-    window.addEventListener('load', ()=>{ setTimeout(()=>map.invalidateSize(), 50); });
-
-    // ===== Sanity tests (console) =====
+    // ==== Theme toggle (optional) ====
     (function(){
-      try {
-        console.assert(typeof makePlannedIcon === 'function', 'makePlannedIcon not a function');
-        console.assert(typeof makePrintedIcon === 'function', 'makePrintedIcon not a function');
-        const a = makePlannedIcon();
-        const b = makePrintedIcon();
-        console.assert(a && a.options && a.options.html, 'planned icon missing html');
-        console.assert(b && b.options && b.options.html, 'printed icon missing html');
+      const btn=document.getElementById('theme-toggle');
+      const key='airport-theme';
+      const saved=localStorage.getItem(key);
+      if(saved==='light') document.body.classList.add('light');
+      btn.addEventListener('click',()=>{
+        document.body.classList.toggle('light');
+        localStorage.setItem(key, document.body.classList.contains('light')?'light':'dark');
+        setTimeout(()=>map.invalidateSize(),100);
+      });
+    })();
+
+    // ==== Sanity tests (console) ====
+    (function(){
+      try{
+        console.assert(AIRPORTS.length>=1, 'AIRPORTS should not be empty');
+        console.assert(PLANNED_AIRPORTS.length>=1, 'PLANNED_AIRPORTS should not be empty');
+        const hasBlue = !!blueIcon && blueIcon.options && blueIcon.options.iconUrl;
+        const hasRed = !!redIcon && redIcon.options && redIcon.options.iconUrl;
+        console.assert(hasBlue && hasRed, 'colored icons missing');
         console.log('%cSanity checks passed','color:#22c55e');
-      } catch(err){
-        console.warn('Sanity test failed:', err);
-      }
+      }catch(err){ console.warn('Sanity test failed:', err); }
     })();
   </script>
 </body>
