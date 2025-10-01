@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Karols 3D‑gedruckte Flughäfen – Interaktive Karte</title>
-  <meta name="description" content="Interaktive Weltkarte aller bereits gedruckten Flughäfen mit Infos und Direktlinks zu MakerWorld." />
+  <title>Karol’s 3D‑printed Airports – Interactive Map</title>
+  <meta name="description" content="Interactive world map of Karol’s 3D‑printed airports with details and MakerWorld links. Includes continent filter and upcoming airports layer." />
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -13,39 +13,33 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
   
   <style>
-    :root {
-      --bg: #0b1020;
-      --panel: #12172b;
-      --text: #e9edf5;
-      --muted: #a6b0cf;
-      --accent: #6aa0ff;
-    }
-    html, body { height: 100%; margin: 0; }
-    body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial, 'Apple Color Emoji', 'Segoe UI Emoji'; }
-    .app { display: grid; grid-template-rows: auto 1fr; height: 100%; }
-    header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 1rem; background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0)); border-bottom: 1px solid rgba(255,255,255,0.08); }
-    header h1 { font-size: 1.05rem; margin: 0; letter-spacing: .2px; }
-    header .meta { font-size: .9rem; color: var(--muted); }
-    .controls { display: flex; gap: .5rem; align-items: center; }
-    .controls input[type="search"] { background: var(--panel); color: var(--text); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: .45rem .7rem; width: 22ch; }
-    .controls button { background: var(--panel); color: var(--text); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; padding: .45rem .7rem; cursor: pointer; }
-    .controls button:hover { border-color: var(--accent); }
+    :root { --bg:#0b1020; --panel:#12172b; --text:#e9edf5; --muted:#a6b0cf; --accent:#6aa0ff; }
+    html,body{height:100%;margin:0}
+    body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,"Helvetica Neue",Arial}
+    .app{display:grid;grid-template-rows:auto 1fr;height:100%;min-height:100vh}
+    header{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.9rem 1rem;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0));border-bottom:1px solid rgba(255,255,255,.08)}
+    header h1{font-size:1.05rem;margin:0;letter-spacing:.2px}
+    header .meta{font-size:.9rem;color:var(--muted)}
+    .controls{display:flex;gap:.5rem;align-items:center}
+    .controls input[type="search"], .controls select{background:var(--panel);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:.45rem .7rem}
+    .controls input[type="search"]{width:22ch}
+    .controls button{background:var(--panel);color:var(--text);border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:.45rem .7rem;cursor:pointer}
+    .controls button:hover{border-color:var(--accent)}
+    #map{height:100%;width:100%;min-height:80vh}
 
-    #map { height: 100%; width: 100%; min-height: 80vh; }
+    .leaflet-popup-content-wrapper{background:var(--panel);color:var(--text);border-radius:12px}
+    .leaflet-popup-tip{background:var(--panel)}
+    .popup h3{margin:.2rem 0 .4rem;font-size:1rem}
+    .popup .sub{color:var(--muted);font-size:.9rem;margin-bottom:.35rem}
+    .popup a{color:var(--accent);text-decoration:none}
+    .popup a:hover{text-decoration:underline}
+    .badge{display:inline-block;padding:.15rem .45rem;border:1px solid rgba(255,255,255,.18);border-radius:999px;font-size:.75rem;color:var(--muted);margin-right:.35rem}
+    .footer{position:absolute;right:10px;bottom:12px;background:rgba(18,23,43,.8);color:var(--muted);padding:.35rem .6rem;border-radius:8px;font-size:.8rem;z-index:400}
 
-    .leaflet-popup-content-wrapper { background: var(--panel); color: var(--text); border-radius: 12px; }
-    .leaflet-popup-tip { background: var(--panel); }
-    .popup h3 { margin: .2rem 0 .4rem; font-size: 1rem; }
-    .popup .sub { color: var(--muted); font-size: .9rem; margin-bottom: .35rem; }
-    .popup a { color: var(--accent); text-decoration: none; }
-    .popup a:hover { text-decoration: underline; }
-    .badge { display: inline-block; padding: .15rem .45rem; border: 1px solid rgba(255,255,255,0.18); border-radius: 999px; font-size: .75rem; color: var(--muted); margin-right: .35rem; }
-    .footer { position: absolute; right: 10px; bottom: 12px; background: rgba(18,23,43,0.8); color: var(--muted); padding: .35rem .6rem; border-radius: 8px; font-size: .8rem; z-index: 400; }
-  .planned-dot{width:18px;height:18px;border-radius:50%;background:#e53935;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(229,57,53,.35);} 
-  .planned-dot{width:18px;height:18px;border-radius:50%;background:#e53935;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(229,57,53,.35);} 
-    .printed-dot{width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(59,130,246,.35);} 
-    .legend{ background: rgba(18,23,43,0.85); color: var(--text); padding: .5rem .7rem; border-radius: 8px; font-size: .85rem; line-height: 1.2; border: 1px solid rgba(255,255,255,0.1);} 
-    .legend-row{ display:flex; align-items:center; gap:.5rem; margin:.2rem 0; }
+    .planned-dot{width:18px;height:18px;border-radius:50%;background:#e53935;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(229,57,53,.35)}
+    .printed-dot{width:18px;height:18px;border-radius:50%;background:#3b82f6;border:2px solid rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(59,130,246,.35)}
+    .legend{background:rgba(18,23,43,.85);color:var(--text);padding:.5rem .7rem;border-radius:8px;font-size:.85rem;line-height:1.2;border:1px solid rgba(255,255,255,.1)}
+    .legend-row{display:flex;align-items:center;gap:.5rem;margin:.2rem 0}
   </style>
 </head>
 <body>
@@ -77,291 +71,157 @@
   <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
   <script>
-    // ====== Datensatz: bereits gedruckte Flughäfen ======
-    // Fülle die makerUrl mit deinem echten MakerWorld-Link.
-    // Wenn kein Link existiert, lass es auf "#" stehen.
+    // ====== DATA ======
     const AIRPORTS = [
-      { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australien', lat: -34.9450, lng: 138.5306, makerUrl: '#' },
+      { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australia', lat: -34.9450, lng: 138.5306, makerUrl: '#' },
       { name: 'Orlando', iata: 'MCO', icao: 'KMCO', city: 'Orlando', country: 'USA', lat: 28.4312, lng: -81.3081, makerUrl: '#' },
       { name: 'Farmingdale – Republic', iata: 'FRG', icao: 'KFRG', city: 'Farmingdale, NY', country: 'USA', lat: 40.7288, lng: -73.4134, makerUrl: '#' },
       { name: 'New York – John F. Kennedy', iata: 'JFK', icao: 'KJFK', city: 'New York', country: 'USA', lat: 40.6413, lng: -73.7781, makerUrl: '#' },
       { name: 'Washington Dulles', iata: 'IAD', icao: 'KIAD', city: 'Washington, DC', country: 'USA', lat: 38.9531, lng: -77.4565, makerUrl: '#' },
-      { name: 'Brescia Montichiari', iata: 'VBS', icao: 'LIPO', city: 'Brescia', country: 'Italien', lat: 45.4289, lng: 10.3306, makerUrl: '#' },
+      { name: 'Brescia Montichiari', iata: 'VBS', icao: 'LIPO', city: 'Brescia', country: 'Italy', lat: 45.4289, lng: 10.3306, makerUrl: '#' },
       { name: 'Seattle–Tacoma', iata: 'SEA', icao: 'KSEA', city: 'Seattle', country: 'USA', lat: 47.4502, lng: -122.3088, makerUrl: '#' },
       { name: 'Los Angeles', iata: 'LAX', icao: 'KLAX', city: 'Los Angeles', country: 'USA', lat: 33.9416, lng: -118.4085, makerUrl: '#' },
-      { name: 'Frankfurt Main', iata: 'FRA', icao: 'EDDF', city: 'Frankfurt', country: 'Deutschland', lat: 50.0379, lng: 8.5622, makerUrl: '#' },
-      { name: 'München', iata: 'MUC', icao: 'EDDM', city: 'München', country: 'Deutschland', lat: 48.3538, lng: 11.7861, makerUrl: '#' },
+      { name: 'Frankfurt Main', iata: 'FRA', icao: 'EDDF', city: 'Frankfurt', country: 'Germany', lat: 50.0379, lng: 8.5622, makerUrl: '#' },
+      { name: 'Munich', iata: 'MUC', icao: 'EDDM', city: 'Munich', country: 'Germany', lat: 48.3538, lng: 11.7861, makerUrl: '#' },
       { name: 'San Francisco', iata: 'SFO', icao: 'KSFO', city: 'San Francisco', country: 'USA', lat: 37.6213, lng: -122.3790, makerUrl: '#' },
     ];
 
-    // ====== NEU: Geplante Flughäfen (werden mit rotem Marker angezeigt) ======
-    // Trage hier die Airports ein, die demnächst erscheinen sollen.
-    // Beispiel-Einträge (Platzhalter-Koordinaten/Links):
     const PLANNED_AIRPORTS = [
-      { name: 'Salt Lake City', iata: 'SLC', icao: 'KSLC', city: 'Salt Lake City', country: 'USA', lat: 40.7899, lng: -111.9791, note: 'Bald verfügbar' },
-      { name: 'Bangkok – Suvarnabhumi', iata: 'BKK', icao: 'VTBS', city: 'Bangkok', country: 'Thailand', lat: 13.6900, lng: 100.7501, note: 'Bald verfügbar' },
-      { name: 'Tokio – Haneda', iata: 'HND', icao: 'RJTT', city: 'Tokio', country: 'Japan', lat: 35.5494, lng: 139.7798, note: 'Bald verfügbar' },
-      { name: 'Peking – Daxing', iata: 'PKX', icao: 'ZBAD', city: 'Peking', country: 'China', lat: 39.5099, lng: 116.4108, note: 'Bald verfügbar' },
-      { name: 'Istanbul – Flughafen Istanbul', iata: 'IST', icao: 'LTFM', city: 'Istanbul', country: 'Türkei', lat: 41.2622, lng: 28.7278, note: 'Bald verfügbar' },
-      { name: 'Paris – Charles de Gaulle', iata: 'CDG', icao: 'LFPG', city: 'Paris', country: 'Frankreich', lat: 49.0097, lng: 2.5479, note: 'Bald verfügbar' },
-      { name: 'Amsterdam – Schiphol', iata: 'AMS', icao: 'EHAM', city: 'Amsterdam', country: 'Niederlande', lat: 52.3105, lng: 4.7683, note: 'Bald verfügbar' },
-      { name: 'Hannover', iata: 'HAJ', icao: 'EDDV', city: 'Hannover', country: 'Deutschland', lat: 52.4611, lng: 9.6850, note: 'Bald verfügbar' },
-      { name: 'Barcelona – El Prat', iata: 'BCN', icao: 'LEBL', city: 'Barcelona', country: 'Spanien', lat: 41.2971, lng: 2.0785, note: 'Bald verfügbar' },
-      { name: 'Zürich', iata: 'ZRH', icao: 'LSZH', city: 'Zürich', country: 'Schweiz', lat: 47.4647, lng: 8.5492, note: 'Bald verfügbar' },
-      { name: 'Sydney – Kingsford Smith', iata: 'SYD', icao: 'YSSY', city: 'Sydney', country: 'Australien', lat: -33.9399, lng: 151.1753, note: 'Bald verfügbar' },
-      { name: 'Singapur – Changi', iata: 'SIN', icao: 'WSSS', city: 'Singapur', country: 'Singapur', lat: 1.3644, lng: 103.9915, note: 'Bald verfügbar' },
-      { name: 'Cincinnati/Northern Kentucky', iata: 'CVG', icao: 'KCVG', city: 'Cincinnati', country: 'USA', lat: 39.0488, lng: -84.6678, note: 'Bald verfügbar' },
-      { name: 'Berlin – Brandenburg', iata: 'BER', icao: 'EDDB', city: 'Berlin', country: 'Deutschland', lat: 52.3667, lng: 13.5033, note: 'Bald verfügbar' },
-      { name: 'London – Heathrow', iata: 'LHR', icao: 'EGLL', city: 'London', country: 'Vereinigtes Königreich', lat: 51.4700, lng: -0.4543, note: 'Bald verfügbar' },
-      { name: 'Dubai – International', iata: 'DXB', icao: 'OMDB', city: 'Dubai', country: 'Vereinigte Arabische Emirate', lat: 25.2532, lng: 55.3657, note: 'Bald verfügbar' },
-      { name: 'Doha – Hamad International', iata: 'DOH', icao: 'OTHH', city: 'Doha', country: 'Katar', lat: 25.2731, lng: 51.6081, note: 'Bald verfügbar' },
-      { name: 'Malé – Velana International', iata: 'MLE', icao: 'VRMM', city: 'Malé', country: 'Malediven', lat: 4.1918, lng: 73.5291, note: 'Bald verfügbar' },
-      { name: 'Seoul – Incheon', iata: 'ICN', icao: 'RKSI', city: 'Incheon/Seoul', country: 'Südkorea', lat: 37.4602, lng: 126.4407, note: 'Bald verfügbar' },
-      { name: 'Honolulu – Daniel K. Inouye', iata: 'HNL', icao: 'PHNL', city: 'Honolulu', country: 'USA', lat: 21.3245, lng: -157.9251, note: 'Bald verfügbar' },
-      { name: 'Toronto – Pearson', iata: 'YYZ', icao: 'CYYZ', city: 'Toronto', country: 'Kanada', lat: 43.6777, lng: -79.6248, note: 'Bald verfügbar' },
+      { name: 'Salt Lake City', iata: 'SLC', icao: 'KSLC', city: 'Salt Lake City', country: 'USA', lat: 40.7899, lng: -111.9791, note: 'Coming soon' },
+      { name: 'Bangkok – Suvarnabhumi', iata: 'BKK', icao: 'VTBS', city: 'Bangkok', country: 'Thailand', lat: 13.6900, lng: 100.7501, note: 'Coming soon' },
+      { name: 'Tokyo – Haneda', iata: 'HND', icao: 'RJTT', city: 'Tokyo', country: 'Japan', lat: 35.5494, lng: 139.7798, note: 'Coming soon' },
+      { name: 'Beijing – Daxing', iata: 'PKX', icao: 'ZBAD', city: 'Beijing', country: 'China', lat: 39.5099, lng: 116.4108, note: 'Coming soon' },
+      { name: 'Istanbul', iata: 'IST', icao: 'LTFM', city: 'Istanbul', country: 'Turkey', lat: 41.2622, lng: 28.7278, note: 'Coming soon' },
+      { name: 'Paris – CDG', iata: 'CDG', icao: 'LFPG', city: 'Paris', country: 'France', lat: 49.0097, lng: 2.5479, note: 'Coming soon' },
+      { name: 'Amsterdam – Schiphol', iata: 'AMS', icao: 'EHAM', city: 'Amsterdam', country: 'Netherlands', lat: 52.3105, lng: 4.7683, note: 'Coming soon' },
+      { name: 'Hannover', iata: 'HAJ', icao: 'EDDV', city: 'Hanover', country: 'Germany', lat: 52.4611, lng: 9.6850, note: 'Coming soon' },
+      { name: 'Barcelona – El Prat', iata: 'BCN', icao: 'LEBL', city: 'Barcelona', country: 'Spain', lat: 41.2971, lng: 2.0785, note: 'Coming soon' },
+      { name: 'Zurich', iata: 'ZRH', icao: 'LSZH', city: 'Zurich', country: 'Switzerland', lat: 47.4647, lng: 8.5492, note: 'Coming soon' },
+      { name: 'Sydney – Kingsford Smith', iata: 'SYD', icao: 'YSSY', city: 'Sydney', country: 'Australia', lat: -33.9399, lng: 151.1753, note: 'Coming soon' },
+      { name: 'Singapore – Changi', iata: 'SIN', icao: 'WSSS', city: 'Singapore', country: 'Singapore', lat: 1.3644, lng: 103.9915, note: 'Coming soon' },
+      { name: 'Cincinnati/Northern Kentucky', iata: 'CVG', icao: 'KCVG', city: 'Cincinnati', country: 'USA', lat: 39.0488, lng: -84.6678, note: 'Coming soon' },
+      { name: 'Berlin – BER', iata: 'BER', icao: 'EDDB', city: 'Berlin', country: 'Germany', lat: 52.3667, lng: 13.5033, note: 'Coming soon' },
+      { name: 'London – Heathrow', iata: 'LHR', icao: 'EGLL', city: 'London', country: 'UK', lat: 51.4700, lng: -0.4543, note: 'Coming soon' },
+      { name: 'Dubai – DXB', iata: 'DXB', icao: 'OMDB', city: 'Dubai', country: 'UAE', lat: 25.2532, lng: 55.3657, note: 'Coming soon' },
+      { name: 'Doha – Hamad', iata: 'DOH', icao: 'OTHH', city: 'Doha', country: 'Qatar', lat: 25.2731, lng: 51.6081, note: 'Coming soon' },
+      { name: 'Malé – Velana', iata: 'MLE', icao: 'VRMM', city: 'Male', country: 'Maldives', lat: 4.1918, lng: 73.5291, note: 'Coming soon' },
+      { name: 'Seoul – Incheon', iata: 'ICN', icao: 'RKSI', city: 'Seoul', country: 'South Korea', lat: 37.4602, lng: 126.4407, note: 'Coming soon' },
+      { name: 'Honolulu – HNL', iata: 'HNL', icao: 'PHNL', city: 'Honolulu', country: 'USA', lat: 21.3245, lng: -157.9251, note: 'Coming soon' },
+      { name: 'Toronto – Pearson', iata: 'YYZ', icao: 'CYYZ', city: 'Toronto', country: 'Canada', lat: 43.6777, lng: -79.6248, note: 'Coming soon' },
     ];
 
-    // ====== Karte initialisieren ======
+    // ====== MAP SETUP ======
     const map = L.map('map', { worldCopyJump: true });
-    // Ensure proper sizing after initial render (mobile Safari, GitHub Pages)
-    window.addEventListener('load', () => { setTimeout(() => map.invalidateSize(), 50); });
     const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 18,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> Mitwirkende'
+      maxZoom: 19,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
     }).addTo(map);
 
-    // Marker Cluster Gruppen
     const printedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
     const plannedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
 
-    // Icon für geplante Flughäfen (roter, runder Div-Icon Marker)
-    function makePlannedIcon() {
-      return L.divIcon({
-        className: 'planned-icon',
-        html: '<div class="planned-dot"></div>',
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
-      });
+    function makePlannedIcon(){
+      return L.divIcon({ className:'planned-icon', html:'<div class="planned-dot"></div>', iconSize:[18,18], iconAnchor:[9,9] });
     }
 
-    // Continent mapping (simple by country name)
+    // Continent mapping by country name (fast + simple)
     function getContinent(country){
-      const c = (country||'').toLowerCase();
-      if (/usa|vereinigte staaten|united states|kanada|canada|mexiko|mexico/.test(c)) return 'North America';
-      if (/brasil|argentin|chile|peru|colombi|ecuador|bolivi|uruguay|paraguay|south america/.test(c)) return 'South America';
-      if (/deutschland|germany|frankreich|france|niederlande|netherlands|italien|italy|spanien|spain|schweiz|switzerland|österreich|austria|vereinigtes königreich|united kingdom|uk|türkei|turkey|polen|czech|belg|dänemark|norway|sweden|finnland|portugal|ireland|holland|europe|niederlande/.test(c)) return 'Europe';
-      if (/australien|australia|neuseeland|new zealand|oceania/.test(c)) return 'Oceania';
-      if (/china|japan|korea|südkorea|south korea|singapur|singapore|thailand|katar|qatar|vereinigte arabische emirate|united arab emirates|uae|maldiv|malé|istanbul|türkei|turkey|doha|dubai|beijing|tokio|tokyo|bangkok|asien|asia/.test(c)) return 'Asia';
-      if (/afrika|africa|egypt|kenya|nigeria|south africa|maroc|morocco|ghana|ethiopia|tanzania/.test(c)) return 'Africa';
+      const c=(country||'').toLowerCase();
+      if(/usa|united states|canada|mexico/.test(c)) return 'North America';
+      if(/brazil|argentin|chile|peru|colombi|ecuador|bolivi|uruguay|paraguay/.test(c)) return 'South America';
+      if(/germany|france|netherlands|italy|spain|switzerland|austria|united kingdom|uk|turkey|poland|czech|belg|denmark|norway|sweden|finland|portugal|ireland|netherlands|holland/.test(c)) return 'Europe';
+      if(/australia|new zealand/.test(c)) return 'Oceania';
+      if(/china|japan|korea|singapore|thailand|qatar|united arab emirates|uae|maldives|istanbul|doha|dubai|beijing|tokyo|bangkok|south korea/.test(c)) return 'Asia';
+      if(/egypt|kenya|nigeria|south africa|morocco|ghana|ethiopia|tanzania/.test(c)) return 'Africa';
       return 'Other';
-    });
     }
 
-    // Marker hinzufügen (GEDRUCKT)
-    const allLatLngs = [];
-    AIRPORTS.forEach(ap => {
-      if (typeof ap.lat !== 'number' || typeof ap.lng !== 'number') return;
-      const m = L.marker([ap.lat, ap.lng]);
-      const link = ap.makerUrl && ap.makerUrl !== '#' 
-        ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`
-        : `<span class="badge">MakerWorld link coming soon</span>`;
-      const popup = `
-        <div class="popup">
-          <h3>${ap.name}</h3>
-          <div class="sub">${ap.city}, ${ap.country}</div>
-          <div style="margin:.35rem 0 .5rem;">
-            <span class="badge">IATA: ${ap.iata}</span>
-            <span class="badge">ICAO: ${ap.icao}</span>
-            <span class="badge">Status: printed</span>
-          </div>
-          ${link}
-        </div>`;
+    const allLatLngs=[];
+
+    // Printed markers
+    AIRPORTS.forEach(ap=>{
+      if(typeof ap.lat!=='number'||typeof ap.lng!=='number') return;
+      const m=L.marker([ap.lat,ap.lng]);
+      const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
+      const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: printed</span></div>${link}</div>`;
       m.bindPopup(popup);
-      m.apData = { ...ap, status: 'printed', continent: getContinent(ap.country) };
+      m.apData={...ap,status:'printed',continent:getContinent(ap.country)};
       printedMarkers.addLayer(m);
-      allLatLngs.push([ap.lat, ap.lng]);
-    });
-      allLatLngs.push([ap.lat, ap.lng]);
+      allLatLngs.push([ap.lat,ap.lng]);
     });
 
-    // Marker hinzufügen (GEPLANT)
-    PLANNED_AIRPORTS.forEach(ap => {
-      if (typeof ap.lat !== 'number' || typeof ap.lng !== 'number') return;
-      const m = L.marker([ap.lat, ap.lng], { icon: makePlannedIcon() });
-      const note = ap.note ? `<div class="sub" style="margin-top:.2rem">${ap.note}</div>` : '';
-      const popup = `
-        <div class="popup">
-          <h3>${ap.name}</h3>
-          <div class="sub">${ap.city}, ${ap.country}</div>
-          <div style="margin:.35rem 0 .5rem;">
-            <span class="badge">IATA: ${ap.iata}</span>
-            <span class="badge">ICAO: ${ap.icao}</span>
-            <span class="badge">Status: planned</span>
-          </div>
-          <span class="badge">Coming soon</span>
-          ${note}
-        </div>`;
+    // Planned markers
+    PLANNED_AIRPORTS.forEach(ap=>{
+      if(typeof ap.lat!=='number'||typeof ap.lng!=='number') return;
+      const m=L.marker([ap.lat,ap.lng],{icon:makePlannedIcon()});
+      const note=ap.note?`<div class="sub" style="margin-top:.2rem">${ap.note}</div>`:'';
+      const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div><span class="badge">Coming soon</span>${note}</div>`;
       m.bindPopup(popup);
-      m.apData = { ...ap, status: 'planned', continent: getContinent(ap.country) };
+      m.apData={...ap,status:'planned',continent:getContinent(ap.country)};
       plannedMarkers.addLayer(m);
-      allLatLngs.push([ap.lat, ap.lng]);
-    });
-
-    // Legend
-    const Legend = L.Control.extend({
-      options: { position: 'bottomleft' },
-      onAdd: function(){
-        const div = L.DomUtil.create('div', 'legend');
-        div.innerHTML = `
-          <div style="font-weight:600;margin-bottom:.3rem;">Legend</div>
-          <div class="legend-row"><span class="printed-dot"></span> Printed</div>
-          <div class="legend-row"><span class="planned-dot"></span> Planned</div>
-        `;
-        return div;
-      }
-    });
-    map.addControl(new Legend());
-      allLatLngs.push([ap.lat, ap.lng]);
+      allLatLngs.push([ap.lat,ap.lng]);
     });
 
     map.addLayer(printedMarkers);
     map.addLayer(plannedMarkers);
 
-    // Layer-Control zum Ein-/Ausblenden
-    L.control.layers({}, { 'Gedruckt': printedMarkers, 'Geplant (rot)': plannedMarkers }, { collapsed: false }).addTo(map);
+    // Layers toggle
+    L.control.layers({}, { 'Printed': printedMarkers, 'Planned (red)': plannedMarkers }, { collapsed: false }).addTo(map);
 
-    if (allLatLngs.length) {
-      map.fitBounds(allLatLngs, { padding: [30, 30] });
-    } else {
-      map.setView([20, 0], 2);
-    }
+    // Fit bounds
+    if(allLatLngs.length) map.fitBounds(allLatLngs,{padding:[30,30]}); else map.setView([20,0],2);
 
-    // ====== Client‑seitige Suche (einfacher Filter) ======
-    const searchInput = document.getElementById('search');
-    const resetBtn = document.getElementById('reset');
+    // Legend
+    const Legend=L.Control.extend({options:{position:'bottomleft'},onAdd:function(){const div=L.DomUtil.create('div','legend');div.innerHTML=`<div style="font-weight:600;margin-bottom:.3rem;">Legend</div><div class="legend-row"><span class="printed-dot"></span> Printed</div><div class="legend-row"><span class="planned-dot"></span> Planned</div>`;return div;}});
+    map.addControl(new Legend());
 
-    function rebuildLayersFrom(listPrinted, listPlanned){
+    // Search + Continent filter
+    const searchInput=document.getElementById('search');
+    const resetBtn=document.getElementById('reset');
+    const continentSel=document.getElementById('continent');
+
+    function rebuildLayersFrom(listPrinted,listPlanned){
       printedMarkers.clearLayers();
       plannedMarkers.clearLayers();
-      const bounds = [];
+      const bounds=[];
 
-      listPrinted.forEach(ap => {
-        const m = L.marker([ap.lat, ap.lng]);
-        const link = ap.makerUrl && ap.makerUrl !== '#' 
-          ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`
-          : `<span class="badge">MakerWorld link coming soon</span>`;
-        const popup = `
-          <div class="popup">
-            <h3>${ap.name}</h3>
-            <div class="sub">${ap.city}, ${ap.country}</div>
-            <div style="margin:.35rem 0 .5rem;">
-              <span class="badge">IATA: ${ap.iata}</span>
-              <span class="badge">ICAO: ${ap.icao}</span>
-              <span class="badge">Status: printed</span>
-            </div>
-            ${link}
-          </div>`;
+      listPrinted.forEach(ap=>{
+        const m=L.marker([ap.lat,ap.lng]);
+        const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
+        const popup=`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: printed</span></div>${link}</div>`;
         m.bindPopup(popup);
         printedMarkers.addLayer(m);
-        bounds.push([ap.lat, ap.lng]);
+        bounds.push([ap.lat,ap.lng]);
       });
 
-      listPlanned.forEach(ap => {
-        const m = L.marker([ap.lat, ap.lng], { icon: makePlannedIcon() });
-        const note = ap.note ? `<div class=\"sub\" style=\"margin-top:.2rem\">${ap.note}</div>` : '';
-        const popup = `
-          <div class="popup">
-            <h3>${ap.name}</h3>
-            <div class="sub">${ap.city}, ${ap.country}</div>
-            <div style="margin:.35rem 0 .5rem;">
-              <span class="badge">IATA: ${ap.iata}</span>
-              <span class="badge">ICAO: ${ap.icao}</span>
-              <span class="badge">Status: planned</span>
-            </div>
-            <span class="badge">Coming soon</span>
-            ${note}
-          </div>`;
+      listPlanned.forEach(ap=>{
+        const m=L.marker([ap.lat,ap.lng],{icon:makePlannedIcon()});
+        const note=ap.note?`<div class=\"sub\" style=\"margin-top:.2rem\">${ap.note}</div>`:'';
+        const popup=`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: planned</span></div><span class=\"badge\">Coming soon</span>${note}</div>`;
         m.bindPopup(popup);
         plannedMarkers.addLayer(m);
-        bounds.push([ap.lat, ap.lng]);
+        bounds.push([ap.lat,ap.lng]);
       });
 
-      if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
-    }{
-      printedMarkers.clearLayers();
-      plannedMarkers.clearLayers();
-      const bounds = [];
-
-      listPrinted.forEach(ap => {
-        const m = L.marker([ap.lat, ap.lng]);
-        const link = ap.makerUrl && ap.makerUrl !== '#' 
-          ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Jetzt drucken →</a>`
-          : `<span class="badge">MakerWorld‑Link folgt</span>`;
-        const popup = `
-          <div class="popup">
-            <h3>${ap.name}</h3>
-            <div class="sub">${ap.city}, ${ap.country}</div>
-            <div style="margin:.35rem 0 .5rem;">
-              <span class="badge">IATA: ${ap.iata}</span>
-              <span class="badge">ICAO: ${ap.icao}</span>
-              <span class="badge">Status: gedruckt</span>
-            </div>
-            ${link}
-          </div>`;
-        m.bindPopup(popup);
-        printedMarkers.addLayer(m);
-        bounds.push([ap.lat, ap.lng]);
-      });
-
-      listPlanned.forEach(ap => {
-        const m = L.marker([ap.lat, ap.lng], { icon: makePlannedIcon() });
-        const note = ap.note ? `<div class=\"sub\" style=\"margin-top:.2rem\">${ap.note}</div>` : '';
-        const popup = `
-          <div class="popup">
-            <h3>${ap.name}</h3>
-            <div class="sub">${ap.city}, ${ap.country}</div>
-            <div style="margin:.35rem 0 .5rem;">
-              <span class="badge">IATA: ${ap.iata}</span>
-              <span class="badge">ICAO: ${ap.icao}</span>
-              <span class="badge">Status: geplant</span>
-            </div>
-            <span class="badge">Bald verfügbar</span>
-            ${note}
-          </div>`;
-        m.bindPopup(popup);
-        plannedMarkers.addLayer(m);
-        bounds.push([ap.lat, ap.lng]);
-      });
-
-      if (bounds.length) map.fitBounds(bounds, { padding: [30,30] });
+      if(bounds.length) map.fitBounds(bounds,{padding:[30,30]});
     }
 
-    function applyFilter(term) {
-      const q = (term || '').trim().toLowerCase();
-      const cont = (document.getElementById('continent').value || 'all');
-      const bySearch = ap => `${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q);
-      const byCont = ap => cont === 'all' || getContinent(ap.country) === cont || (ap.continent && ap.continent === cont);
-
-      const filteredPrinted = AIRPORTS.filter(ap => bySearch(ap) && byCont(ap));
-      const filteredPlanned = PLANNED_AIRPORTS.filter(ap => bySearch(ap) && byCont(ap));
-      rebuildLayersFrom(filteredPrinted, filteredPlanned);
-    } {
-      const q = (term || '').trim().toLowerCase();
-      const filteredPrinted = AIRPORTS.filter(ap => `${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q));
-      const filteredPlanned = PLANNED_AIRPORTS.filter(ap => `${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q));
-      rebuildLayersFrom(filteredPrinted, filteredPlanned);
+    function applyFilter(term){
+      const q=(term||'').trim().toLowerCase();
+      const cont=(continentSel.value||'all');
+      const bySearch=ap=>`${ap.name} ${ap.city} ${ap.country} ${ap.iata} ${ap.icao}`.toLowerCase().includes(q);
+      const byCont=ap=>cont==='all'||getContinent(ap.country)===cont||ap.continent===cont;
+      const filteredPrinted=AIRPORTS.filter(ap=>bySearch(ap)&&byCont(ap));
+      const filteredPlanned=PLANNED_AIRPORTS.filter(ap=>bySearch(ap)&&byCont(ap));
+      rebuildLayersFrom(filteredPrinted,filteredPlanned);
     }
 
-    searchInput.addEventListener('input', (e) => applyFilter(e.target.value));
-    resetBtn.addEventListener('click', () => { 
-      searchInput.value = ''; 
-      document.getElementById('continent').value = 'all';
-      applyFilter(''); 
-    });
+    searchInput.addEventListener('input', e=>applyFilter(e.target.value));
+    continentSel.addEventListener('change', ()=>applyFilter(searchInput.value));
+    resetBtn.addEventListener('click', ()=>{ searchInput.value=''; continentSel.value='all'; applyFilter(''); });
 
-    document.getElementById('continent').addEventListener('change', () => applyFilter(searchInput.value)); });
-
-    // ====== QS: offene Links in neuem Tab sichern (bereits im Link gesetzt) ======
+    // Ensure proper sizing on first paint (mobile/Safari)
+    window.addEventListener('load', ()=>{ setTimeout(()=>map.invalidateSize(), 50); });
   </script>
 </body>
 </html>
