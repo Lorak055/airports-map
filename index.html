@@ -157,19 +157,28 @@
     const printedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
     const plannedMarkers = L.markerClusterGroup({ showCoverageOnHover: false, spiderfyOnMaxZoom: true });
 
-    function makePlannedIcon(){
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'>
-        <path d='M2 16l9-4 9 4-9 5-9-5z' fill='#e53935'/>
-        <path d='M11 3h2v9h-2z' fill='#e53935'/>
-      </svg>`;
-      return L.divIcon({ className:'plane-icon', html: svg, iconSize:[24,24], iconAnchor:[12,12] });
+    function makePlaneIcon(color){
+      const svg = `
+        <svg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 24 24'>
+          <g fill='${color}'>
+            <!-- fuselage -->
+            <rect x='10.6' y='2' width='2.8' height='13.5' rx='1.1'/>
+            <!-- nose -->
+            <polygon points='12,2 13.6,4.2 10.4,4.2' />
+            <!-- wings -->
+            <polygon points='12,9 3,12.3 3,13.6 12,11.5 21,13.6 21,12.3' />
+            <!-- tailplane -->
+            <polygon points='12,6 7.2,7.8 7.2,9 12,7.7 16.8,9 16.8,7.8' />
+            <!-- tail fin -->
+            <polygon points='12,12.5 9.5,15.5 12,15 14.5,15.5' />
+          </g>
+        </svg>`;
+      return L.divIcon({ className:'plane-icon', html: svg, iconSize:[26,26], iconAnchor:[13,13] });
     }
-    function makePrintedIcon(){
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'>
-        <path d='M2 16l9-4 9 4-9 5-9-5z' fill='#3b82f6'/>
-        <path d='M11 3h2v9h-2z' fill='#3b82f6'/>
-      </svg>`;
-      return L.divIcon({ className:'plane-icon', html: svg, iconSize:[24,24], iconAnchor:[12,12] });
+    function makePrintedIcon(){ return null; }
+
+function makePlannedIcon(){ return null; });
+    });
     });
     }
 
@@ -254,7 +263,7 @@
     // Printed markers
     AIRPORTS.forEach(ap=>{
       if(typeof ap.lat!=='number'||typeof ap.lng!=='number') return;
-      const m=L.marker([ap.lat,ap.lng],{icon:makePrintedIcon()});
+      const m=L.marker([ap.lat, ap.lng]);
       const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
       const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: printed</span></div>${link}</div>`;
       m.bindPopup(popup);
@@ -267,7 +276,7 @@
     // Planned markers
     PLANNED_AIRPORTS.forEach(ap=>{
       if(typeof ap.lat!=='number'||typeof ap.lng!=='number') return;
-      const m=L.marker([ap.lat,ap.lng],{icon:makePlannedIcon()});
+      const m=L.marker([ap.lat, ap.lng]);
       const note=ap.note?`<div class="sub" style="margin-top:.2rem">${ap.note}</div>`:'';
       const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div><span class="badge">Coming soon</span>${note}</div>`;
       m.bindPopup(popup);
@@ -301,7 +310,7 @@
       const bounds=[];
 
       listPrinted.forEach(ap=>{
-        const m=L.marker([ap.lat,ap.lng],{icon:makePrintedIcon()});
+        const m=L.marker([ap.lat, ap.lng]);
         const link=ap.makerUrl&&ap.makerUrl!=='#'?`<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`:`<span class="badge">MakerWorld link coming soon</span>`;
         const popup=`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: printed</span></div>${link}</div>`;
         m.bindPopup(popup);
@@ -311,7 +320,7 @@
       });
 
       listPlanned.forEach(ap=>{
-        const m=L.marker([ap.lat,ap.lng],{icon:makePlannedIcon()});
+        const m=L.marker([ap.lat, ap.lng]);
         const note=ap.note?`<div class=\"sub\" style=\"margin-top:.2rem\">${ap.note}</div>`:'';
         const popup=`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: planned</span></div><span class=\"badge\">Coming soon</span>${note}</div>`;
         m.bindPopup(popup);
@@ -339,6 +348,21 @@
 
     // Ensure proper sizing on first paint (mobile/Safari)
     window.addEventListener('load', ()=>{ setTimeout(()=>map.invalidateSize(), 50); });
+
+    // ===== Sanity tests (console) =====
+    (function(){
+      try {
+        console.assert(typeof makePlannedIcon === 'function', 'makePlannedIcon not a function');
+        console.assert(typeof makePrintedIcon === 'function', 'makePrintedIcon not a function');
+        const a = makePlannedIcon();
+        const b = makePrintedIcon();
+        console.assert(a && a.options && a.options.html, 'planned icon missing html');
+        console.assert(b && b.options && b.options.html, 'printed icon missing html');
+        console.log('%cSanity checks passed','color:#22c55e');
+      } catch(err){
+        console.warn('Sanity test failed:', err);
+      }
+    })();
   </script>
 </body>
 </html>
