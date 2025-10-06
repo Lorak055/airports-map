@@ -126,11 +126,15 @@
       console.error('[errorBanner]', e.message, e);
     });
 
-// === Marker Icons (lokal, retina-fähig) ===
+// === Marker Icons (Base64 eingebettet, retinafähig) ===
+const markerShadowBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAeCAYAAABbEP9/AAABZElEQVRIS+3Xv0tDQRgG4P8vg..."
+const markerBlueBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAApCAYAAABM0lVZAAABTUlEQVRIie2UQW7DMAxFz9z/..."
+const markerRedBase64  = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAApCAYAAABM0lVZAAABQUlEQVRIie2UwQ3DIAxFX8z/..."
+
 const blueIcon = L.icon({
-  iconUrl:       'img/marker-icon-blue.png',
-  iconRetinaUrl: 'img/marker-icon-2x-blue.png',
-  shadowUrl:     'img/marker-shadow.png',
+  iconUrl: markerBlueBase64,
+  iconRetinaUrl: markerBlueBase64,
+  shadowUrl: markerShadowBase64,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -138,14 +142,15 @@ const blueIcon = L.icon({
 });
 
 const redIcon = L.icon({
-  iconUrl:       'img/marker-icon-red.png',
-  iconRetinaUrl: 'img/marker-icon-2x-red.png',
-  shadowUrl:     'img/marker-shadow.png',
+  iconUrl: markerRedBase64,
+  iconRetinaUrl: markerRedBase64,
+  shadowUrl: markerShadowBase64,
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41]
 });
+
 
 
 
