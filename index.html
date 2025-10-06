@@ -126,30 +126,37 @@
       console.error('[errorBanner]', e.message, e);
     });
 
-// === Marker Icons (Base64 eingebettet, retinafähig) ===
-const markerShadowBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACkAAAAeCAYAAABbEP9/AAABZElEQVRIS+3Xv0tDQRgG4P8vg..."
-const markerBlueBase64 = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAApCAYAAABM0lVZAAABTUlEQVRIie2UQW7DMAxFz9z/..."
-const markerRedBase64  = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAApCAYAAABM0lVZAAABQUlEQVRIie2UwQ3DIAxFX8z/..."
+// === Marker Icons (inline SVG, keine Dateien nötig) ===
+function makePinSVG(color) {
+  // Klassische Pin-Form mit weißem Rand + kleinem weißen Punkt in der Mitte
+  return `
+  <svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41" aria-hidden="true">
+    <!-- weicher Schatten hinter dem Pin -->
+    <ellipse cx="12.5" cy="39" rx="7.5" ry="2" fill="rgba(0,0,0,.35)"></ellipse>
+    <!-- Pin-Körper -->
+    <path d="M12.5 1
+             C6 1 1 6 1 12.5
+             C1 21 12.5 34 12.5 34
+             C12.5 34 24 21 24 12.5
+             C24 6 19 1 12.5 1Z"
+          fill="${color}" stroke="white" stroke-width="2"/>
+    <!-- innerer heller Kreis -->
+    <circle cx="12.5" cy="12.5" r="4.2" fill="white" fill-opacity="0.9"/>
+  </svg>`;
+}
+function svgIcon(color){
+  return L.divIcon({
+    className: 'pin-icon',
+    html: makePinSVG(color),
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34]
+  });
+}
 
-const blueIcon = L.icon({
-  iconUrl: markerBlueBase64,
-  iconRetinaUrl: markerBlueBase64,
-  shadowUrl: markerShadowBase64,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const redIcon = L.icon({
-  iconUrl: markerRedBase64,
-  iconRetinaUrl: markerRedBase64,
-  shadowUrl: markerShadowBase64,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
+// Blau = printed, Rot = planned
+const blueIcon = svgIcon('#2A81CB');
+const redIcon  = svgIcon('#d63e2a');
 
 
 
