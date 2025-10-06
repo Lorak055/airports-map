@@ -252,33 +252,6 @@ map.on('click', () => {
   panel.setAttribute('aria-hidden', 'true');
 });
 
-// ==== Flag helper ====
-function getFlagEmoji(country) {
-  const flags = {
-    "Germany": "🇩🇪",
-    "USA": "🇺🇸",
-    "Italy": "🇮🇹",
-    "Australia": "🇦🇺",
-    "France": "🇫🇷",
-    "Netherlands": "🇳🇱",
-    "Spain": "🇪🇸",
-    "Switzerland": "🇨🇭",
-    "Thailand": "🇹🇭",
-    "Japan": "🇯🇵",
-    "China": "🇨🇳",
-    "Turkey": "🇹🇷",
-    "Singapore": "🇸🇬",
-    "Qatar": "🇶🇦",
-    "UAE": "🇦🇪",
-    "South Korea": "🇰🇷",
-    "Canada": "🇨🇦",
-    "UK": "🇬🇧",
-    "United Kingdom": "🇬🇧",
-    "Maldives": "🇲🇻"
-  };
-  return flags[country] || "🏳️";
-}
-
     function showPanel(ap){
       pTitle.textContent = ap.name || 'Airport';
       pLoc.textContent   = `${ap.city||''}${ap.city?', ':''}${ap.country||''}`;
