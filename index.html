@@ -234,6 +234,51 @@ const redIcon  = svgIcon('#d63e2a');
     document.getElementById('p-close').addEventListener('click',()=>{ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); });
     map.on('click', ()=>{ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); });
 
+    // ==== Info panel wiring ====
+const panel = document.getElementById('info-panel');
+const pTitle = document.getElementById('p-title');
+const pLoc = document.getElementById('p-location');
+const pIata = document.getElementById('p-iata');
+const pIcao = document.getElementById('p-icao');
+const pStatus = document.getElementById('p-status');
+const pNote = document.getElementById('p-note');
+const pLinkWrap = document.getElementById('p-linkwrap');
+document.getElementById('p-close').addEventListener('click', () => {
+  panel.classList.remove('open');
+  panel.setAttribute('aria-hidden', 'true');
+});
+map.on('click', () => {
+  panel.classList.remove('open');
+  panel.setAttribute('aria-hidden', 'true');
+});
+
+// ==== Flag helper ====
+function getFlagEmoji(country) {
+  const flags = {
+    "Germany": "🇩🇪",
+    "USA": "🇺🇸",
+    "Italy": "🇮🇹",
+    "Australia": "🇦🇺",
+    "France": "🇫🇷",
+    "Netherlands": "🇳🇱",
+    "Spain": "🇪🇸",
+    "Switzerland": "🇨🇭",
+    "Thailand": "🇹🇭",
+    "Japan": "🇯🇵",
+    "China": "🇨🇳",
+    "Turkey": "🇹🇷",
+    "Singapore": "🇸🇬",
+    "Qatar": "🇶🇦",
+    "UAE": "🇦🇪",
+    "South Korea": "🇰🇷",
+    "Canada": "🇨🇦",
+    "UK": "🇬🇧",
+    "United Kingdom": "🇬🇧",
+    "Maldives": "🇲🇻"
+  };
+  return flags[country] || "🏳️";
+}
+
     function showPanel(ap){
       pTitle.textContent = ap.name || 'Airport';
       pLoc.textContent   = `${ap.city||''}${ap.city?', ':''}${ap.country||''}`;
