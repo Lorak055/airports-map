@@ -58,6 +58,11 @@
     body.light .legend{background:rgba(255,255,255,.9);border-color:rgba(0,0,0,.06)}
     .p-image{border-radius:10px;overflow:hidden;border:1px solid rgba(255,255,255,.12);margin:.5rem 0 .8rem}
     .p-image img{display:block;width:100%;height:auto}
+    /* simple 2-col gallery when multiple images present */
+    .p-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+    .p-gallery img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
+    .p-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+    .p-gallery img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
 
     #errorBanner{position:fixed;top:8px;left:8px;right:8px;background:#b91c1c;color:#fff;padding:8px 12px;border-radius:8px;z-index:2000;font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;white-space:pre-wrap;display:none}
   </style>
@@ -121,25 +126,17 @@
       console.error('[errorBanner]', e.message, e);
     });
 
-   // === Marker Icons (reliable CDN versions) ===
-const blueIcon = new L.Icon({
-  iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-blue.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-const redIcon = new L.Icon({
-  iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
+    // ==== Colored standard Leaflet markers (blue/red) ====
+    const blueIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-blue.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
+    const redIcon = new L.Icon({
+      iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+      shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41]
+    });
 
     // ==== Map base ====
     const map = L.map('map', { worldCopyJump: true });
@@ -153,17 +150,17 @@ const redIcon = new L.Icon({
 
     // ==== Data (restored full lists) ====
     const AIRPORTS = [
-      { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australia', lat: -34.9450, lng: 138.5306, makerUrl: 'https://makerworld.com/de/models/1828920-adelaide-intl-airport-ypad-adl#profileId-1952744' },
-      { name: 'Orlando', iata: 'MCO', icao: 'KMCO', city: 'Orlando', country: 'USA', lat: 28.4312, lng: -81.3081, makerUrl: 'https://makerworld.com/de/models/1828907-orlando-intl-airport-kmco-mco#profileId-1952728' },
-      { name: 'Farmingdale – Republic', iata: 'FRG', icao: 'KFRG', city: 'Farmingdale, NY', country: 'USA', lat: 40.7288, lng: -73.4134, makerUrl: 'https://makerworld.com/de/models/1828845-republic-airport-kfrg-frg#profileId-1952656' },
-      { name: 'New York – John F. Kennedy', iata: 'JFK', icao: 'KJFK', city: 'New York', country: 'USA', lat: 40.6413, lng: -73.7781, makerUrl: 'https://makerworld.com/de/models/1637593-new-york-intl-airport-kjfk-jfk#profileId-1730048' },
-      { name: 'Washington Dulles', iata: 'IAD', icao: 'KIAD', city: 'Washington, DC', country: 'USA', lat: 38.9531, lng: -77.4565, makerUrl: 'https://makerworld.com/de/models/1571994-washington-intl-airport-kiad-iad#profileId-1653452' },
-      { name: 'Brescia Montichiari', iata: 'VBS', icao: 'LIPO', city: 'Brescia', country: 'Italy', lat: 45.4289, lng: 10.3306, makerUrl: 'https://makerworld.com/de/models/1571987-brescia-montichiari-airport-lipo-vbs#profileId-1653442' },
-      { name: 'Seattle–Tacoma', iata: 'SEA', icao: 'KSEA', city: 'Seattle', country: 'USA', lat: 47.4502, lng: -122.3088, makerUrl: 'https://makerworld.com/de/models/1499239-seattle-intl-airport-ksea-sea#profileId-1568169' },
-      { name: 'Los Angeles', iata: 'LAX', icao: 'KLAX', city: 'Los Angeles', country: 'USA', lat: 33.9416, lng: -118.4085, makerUrl: 'https://makerworld.com/de/models/1499198-los-angeles-intl-airport-klax-lax#profileId-1568122' },
-      { name: 'Frankfurt Main', iata: 'FRA', icao: 'EDDF', city: 'Frankfurt', country: 'Germany', lat: 50.0379, lng: 8.5622, makerUrl: 'https://makerworld.com/de/models/1499159-frankfurt-intl-airport-eddf-fra#profileId-1568074' },
+      { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australia', lat: -34.9450, lng: 138.5306, makerUrl: '#' },
+      { name: 'Orlando', iata: 'MCO', icao: 'KMCO', city: 'Orlando', country: 'USA', lat: 28.4312, lng: -81.3081, makerUrl: '#' },
+      { name: 'Farmingdale – Republic', iata: 'FRG', icao: 'KFRG', city: 'Farmingdale, NY', country: 'USA', lat: 40.7288, lng: -73.4134, makerUrl: '#' },
+      { name: 'New York – John F. Kennedy', iata: 'JFK', icao: 'KJFK', city: 'New York', country: 'USA', lat: 40.6413, lng: -73.7781, makerUrl: '#' },
+      { name: 'Washington Dulles', iata: 'IAD', icao: 'KIAD', city: 'Washington, DC', country: 'USA', lat: 38.9531, lng: -77.4565, makerUrl: '#' },
+      { name: 'Brescia Montichiari', iata: 'VBS', icao: 'LIPO', city: 'Brescia', country: 'Italy', lat: 45.4289, lng: 10.3306, makerUrl: '#' },
+      { name: 'Seattle–Tacoma', iata: 'SEA', icao: 'KSEA', city: 'Seattle', country: 'USA', lat: 47.4502, lng: -122.3088, makerUrl: '#' },
+      { name: 'Los Angeles', iata: 'LAX', icao: 'KLAX', city: 'Los Angeles', country: 'USA', lat: 33.9416, lng: -118.4085, makerUrl: '#' },
+      { name: 'Frankfurt Main', iata: 'FRA', icao: 'EDDF', city: 'Frankfurt', country: 'Germany', lat: 50.0379, lng: 8.5622, makerUrl: '#' },
       { name: 'Munich', iata: 'MUC', icao: 'EDDM', city: 'Munich', country: 'Germany', lat: 48.3538, lng: 11.7861, makerUrl: 'https://makerworld.com/de/models/1433941-munich-airport-eddm-muc-runway-layout#profileId-1491535', imageUrl: 'https://mastercms.alhilalgroup.com/source/TTN/2017/02/28/201702281906211noqixw0.2gj.jpg' },
-      { name: 'San Francisco', iata: 'SFO', icao: 'KSFO', city: 'San Francisco', country: 'USA', lat: 37.6213, lng: -122.3790, makerUrl: 'https://makerworld.com/de/models/1437390-san-francisco-intl-airport-ksfo-sfo#profileId-1495606' },
+      { name: 'San Francisco', iata: 'SFO', icao: 'KSFO', city: 'San Francisco', country: 'USA', lat: 37.6213, lng: -122.3790, makerUrl: '#' },
     ];
 
     const PLANNED_AIRPORTS = [
@@ -187,7 +184,6 @@ const redIcon = new L.Icon({
       { name: 'Malé – Velana', iata: 'MLE', icao: 'VRMM', city: 'Male', country: 'Maldives', lat: 4.1918, lng: 73.5291, note: 'Coming soon' },
       { name: 'Seoul – Incheon', iata: 'ICN', icao: 'RKSI', city: 'Seoul', country: 'South Korea', lat: 37.4602, lng: 126.4407, note: 'Coming soon' },
       { name: 'Honolulu – HNL', iata: 'HNL', icao: 'PHNL', city: 'Honolulu', country: 'USA', lat: 21.3245, lng: -157.9251, note: 'Coming soon' },
-      { name: 'Lisbon - Portela', iata: 'LIS', icao: 'LPPT', city: 'Lisbon', country: 'Portugal', lat: 38.77201, lng: -9.12985, note: 'Coming soon' },
       { name: 'Toronto – Pearson', iata: 'YYZ', icao: 'CYYZ', city: 'Toronto', country: 'Canada', lat: 43.6777, lng: -79.6248, note: 'Coming soon' },
     ];
 
@@ -222,6 +218,25 @@ const redIcon = new L.Icon({
       pIcao.textContent  = `ICAO: ${ap.icao||'-'}`;
       pStatus.textContent= `Status: ${ap.status||'unknown'}`;
       pNote.textContent  = ap.note ? String(ap.note) : '';
+
+      // Images: support either a single imageUrl or an array imageUrls (up to 2 shown)
+      const imgWrap = document.getElementById('p-image');
+      if (ap.imageUrls && Array.isArray(ap.imageUrls) && ap.imageUrls.length){
+        const imgs = ap.imageUrls.slice(0,2).map(url=>{
+          const tag = `<img alt="${ap.name}" src="${url}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.p-image').style.display='none'">`;
+          return (ap.makerUrl && ap.makerUrl!=='#') ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">${tag}</a>` : tag;
+        }).join('');
+        imgWrap.style.display = 'block';
+        imgWrap.innerHTML = `<div class="p-gallery">${imgs}</div>`;
+      } else if (ap.imageUrl) {
+        const tag = `<img alt="${ap.name}" src="${ap.imageUrl}" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.p-image').style.display='none'">`;
+        imgWrap.style.display = 'block';
+        imgWrap.innerHTML = (ap.makerUrl && ap.makerUrl!=='#') ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">${tag}</a>` : tag;
+      } else {
+        imgWrap.style.display = 'none';
+        imgWrap.innerHTML = '';
+      }
+
       if (ap.makerUrl && ap.makerUrl !== '#') {
         pLinkWrap.innerHTML = `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`;
       } else { pLinkWrap.innerHTML = ''; }
@@ -268,8 +283,29 @@ const redIcon = new L.Icon({
     function rebuildLayersFrom(listPrinted,listPlanned){
       printedMarkers.clearLayers(); plannedMarkers.clearLayers();
       const bounds=[];
-      listPrinted.forEach(ap=>{ const m=L.marker([ap.lat,ap.lng],{icon:blueIcon}); m.bindPopup(`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: printed</span></div></div>`); printedMarkers.addLayer(m); m.on('click',()=>showPanel({...ap,status:'printed'})); bounds.push([ap.lat,ap.lng]); });
-      listPlanned.forEach(ap=>{ const m=L.marker([ap.lat,ap.lng],{icon:redIcon}); m.bindPopup(`<div class=\"popup\"><h3>${ap.name}</h3><div class=\"sub\">${ap.city}, ${ap.country}</div><div style=\"margin:.35rem 0 .5rem;\"><span class=\"badge\">IATA: ${ap.iata}</span><span class=\"badge\">ICAO: ${ap.icao}</span><span class=\"badge\">Status: planned</span></div><span class=\"badge\">Coming soon</span></div>`); plannedMarkers.addLayer(m); m.on('click',()=>showPanel({...ap,status:'planned'})); bounds.push([ap.lat,ap.lng]); });
+
+      listPrinted.forEach(ap=>{
+        const m=L.marker([ap.lat,ap.lng],{icon:blueIcon});
+        const link=(ap.makerUrl&&ap.makerUrl!=='#')
+          ? `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`
+          : `<span class="badge">MakerWorld link coming soon</span>`;
+        const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: printed</span></div>${link}</div>`;
+        m.bindPopup(popup);
+        printedMarkers.addLayer(m);
+        m.on('click',()=>showPanel({...ap,status:'printed'}));
+        bounds.push([ap.lat,ap.lng]);
+      });
+
+      listPlanned.forEach(ap=>{
+        const m=L.marker([ap.lat,ap.lng],{icon:redIcon});
+        const note=ap.note?`<div class="sub" style="margin-top:.2rem">${ap.note}</div>`:'';
+        const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div><span class="badge">Coming soon</span>${note}</div>`;
+        m.bindPopup(popup);
+        plannedMarkers.addLayer(m);
+        m.on('click',()=>showPanel({...ap,status:'planned'}));
+        bounds.push([ap.lat,ap.lng]);
+      });
+
       if(bounds.length) map.fitBounds(bounds,{padding:[30,30]});
     }
 
