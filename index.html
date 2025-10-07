@@ -194,6 +194,8 @@
       { name: 'Seoul – Incheon', iata: 'ICN', icao: 'RKSI', city: 'Seoul', country: 'South Korea', lat: 37.4602, lng: 126.4407, note: 'Coming soon' },
       { name: 'Honolulu – HNL', iata: 'HNL', icao: 'PHNL', city: 'Honolulu', country: 'USA', lat: 21.3245, lng: -157.9251, note: 'Coming soon' },
       { name: 'Boston – Logan', iata: 'BOS', icao: 'KBOS', city: 'Boston', country: 'USA', lat: 42.3656, lng: -71.0096, note: 'Coming soon' },
+      { name: 'Atlanta – Hartsfield–Jackson', iata: 'ATL', icao: 'KATL', city: 'Atlanta', country: 'USA', lat: 33.6407, lng: -84.4277, note: 'Coming soon' },
+      { name: 'Dallas/Fort Worth – DFW', iata: 'DFW', icao: 'KDFW', city: 'Dallas–Fort Worth', country: 'USA', lat: 32.8998, lng: -97.0403, note: 'Coming soon' },
       { name: 'Toronto – Pearson', iata: 'YYZ', icao: 'CYYZ', city: 'Toronto', country: 'Canada', lat: 43.6777, lng: -79.6248, note: 'Coming soon' },
     ];
 
@@ -285,8 +287,10 @@
 
     PLANNED_AIRPORTS.forEach(ap=>{
       const m=L.marker([ap.lat,ap.lng],{icon:redIcon});
-      const note=ap.note?`<div class="sub" style="margin-top:.2rem">${ap.note}</div>`:'';
-      const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div><span class="badge">Coming soon</span>${note}</div>`;
+      const info = ap.note
+      ? `<div class="sub" style="margin-top:.2rem">${ap.note}</div>`
+      : `<span class="badge">Coming soon</span>`;
+      const popup = `<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div>${info}</div>`;
       m.bindPopup(popup); m.apData={...ap,status:'planned',continent:getContinent(ap.country)};
       plannedMarkers.addLayer(m); m.on('click',()=>showPanel(m.apData));
       allLatLngs.push([ap.lat,ap.lng]);
@@ -326,8 +330,10 @@
 
       listPlanned.forEach(ap=>{
         const m=L.marker([ap.lat,ap.lng],{icon:redIcon});
-        const note=ap.note?`<div class="sub" style="margin-top:.2rem">${ap.note}</div>`:'';
-        const popup=`<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div><span class="badge">Coming soon</span>${note}</div>`;
+        const info = ap.note
+        ? `<div class="sub" style="margin-top:.2rem">${ap.note}</div>`
+        : `<span class="badge">Coming soon</span>`;
+        const popup = `<div class="popup"><h3>${ap.name}</h3><div class="sub">${ap.city}, ${ap.country}</div><div style="margin:.35rem 0 .5rem;"><span class="badge">IATA: ${ap.iata}</span><span class="badge">ICAO: ${ap.icao}</span><span class="badge">Status: planned</span></div>${info}</div>`;
         m.bindPopup(popup);
         plannedMarkers.addLayer(m);
         m.on('click',()=>showPanel({...ap,status:'planned'}));
