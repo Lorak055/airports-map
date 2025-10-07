@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Karol’s 3D‑printed Airports – Interactive Map</title>
-  <meta name="description" content="Interactive world map of Karol’s 3D‑printed airports with details and MakerWorld links. Includes continent filter and upcoming airports layer." />
+  <title>Karol’s 3D-printed Airports – Interactive Map</title>
+  <meta name="description" content="Interactive world map of Karol’s 3D-printed airports with details and MakerWorld links. Includes continent filter and upcoming airports layer." />
 
   <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
@@ -61,8 +61,6 @@
     /* simple 2-col gallery when multiple images present */
     .p-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
     .p-gallery img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
-    .p-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
-    .p-gallery img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid rgba(255,255,255,.12)}
 
     #errorBanner{position:fixed;top:8px;left:8px;right:8px;background:#b91c1c;color:#fff;padding:8px 12px;border-radius:8px;z-index:2000;font:12px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;white-space:pre-wrap;display:none}
   </style>
@@ -71,7 +69,7 @@
   <pre id="errorBanner"></pre>
   <div class="app">
     <header>
-      <h1>Karol’s 3D‑printed Airports</h1>
+      <h1>Karol’s 3D-printed Airports</h1>
       <div class="controls">
         <input id="search" type="search" placeholder="Search: City, IATA, ICAO" />
         <select id="continent" aria-label="Filter by continent">
@@ -89,7 +87,8 @@
       <div class="meta">Public map · Leaflet</div>
     </header>
     <div id="map"></div>
-    <!-- Info Panel (slides in on marker click) -->
+
+    <!-- Info Panel -->
     <aside id="info-panel" aria-hidden="true">
       <div class="panel-header">
         <h2 id="p-title">Airport</h2>
@@ -126,40 +125,27 @@
       console.error('[errorBanner]', e.message, e);
     });
 
-// === Marker Icons (inline SVG, keine Dateien nötig) ===
-function makePinSVG(color) {
-  // Klassische Pin-Form mit weißem Rand + kleinem weißen Punkt in der Mitte
-  return `
-  <svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41" aria-hidden="true">
-    <!-- weicher Schatten hinter dem Pin -->
-    <ellipse cx="12.5" cy="39" rx="7.5" ry="2" fill="rgba(0,0,0,.35)"></ellipse>
-    <!-- Pin-Körper -->
-    <path d="M12.5 1
-             C6 1 1 6 1 12.5
-             C1 21 12.5 34 12.5 34
-             C12.5 34 24 21 24 12.5
-             C24 6 19 1 12.5 1Z"
-          fill="${color}" stroke="white" stroke-width="2"/>
-    <!-- innerer heller Kreis -->
-    <circle cx="12.5" cy="12.5" r="4.2" fill="white" fill-opacity="0.9"/>
-  </svg>`;
-}
-function svgIcon(color){
-  return L.divIcon({
-    className: 'pin-icon',
-    html: makePinSVG(color),
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34]
-  });
-}
-
-// Blau = printed, Rot = planned
-const blueIcon = svgIcon('#2A81CB');
-const redIcon  = svgIcon('#d63e2a');
-
-
-
+    // === Marker Icons (inline SVG, keine Dateien nötig) ===
+    function makePinSVG(color) {
+      return `
+      <svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41" aria-hidden="true">
+        <ellipse cx="12.5" cy="39" rx="7.5" ry="2" fill="rgba(0,0,0,.35)"></ellipse>
+        <path d="M12.5 1 C6 1 1 6 1 12.5 C1 21 12.5 34 12.5 34 C12.5 34 24 21 24 12.5 C24 6 19 1 12.5 1Z"
+              fill="${color}" stroke="white" stroke-width="2"/>
+        <circle cx="12.5" cy="12.5" r="4.2" fill="white" fill-opacity="0.9"/>
+      </svg>`;
+    }
+    function svgIcon(color){
+      return L.divIcon({
+        className: 'pin-icon',
+        html: makePinSVG(color),
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34]
+      });
+    }
+    const blueIcon = svgIcon('#2A81CB'); // printed
+    const redIcon  = svgIcon('#d63e2a'); // planned
 
     // ==== Map base ====
     const map = L.map('map', { worldCopyJump: true });
@@ -171,7 +157,7 @@ const redIcon  = svgIcon('#d63e2a');
     const printedMarkers = L.markerClusterGroup({ showCoverageOnHover:false, spiderfyOnMaxZoom:true });
     const plannedMarkers = L.markerClusterGroup({ showCoverageOnHover:false, spiderfyOnMaxZoom:true });
 
-    // ==== Data (restored full lists) ====
+    // ==== Data (URLs unverändert gelassen) ====
     const AIRPORTS = [
       { name: 'Adelaide', iata: 'ADL', icao: 'YPAD', city: 'Adelaide', country: 'Australia', lat: -34.9450, lng: 138.5306, makerUrl: 'https://makerworld.com/de/models/1828920-adelaide-intl-airport-ypad-adl#profileId-1952744', imageUrl: 'https://global.discourse-cdn.com/infiniteflight/original/3X/8/e/8e8831803a80bf3bceb4b725d0aff339d531ef2d.jpg' },
       { name: 'Orlando', iata: 'MCO', icao: 'KMCO', city: 'Orlando', country: 'USA', lat: 28.4312, lng: -81.3081, makerUrl: 'https://makerworld.com/de/models/1828907-orlando-intl-airport-kmco-mco#profileId-1952728', imageUrl: 'https://s28477.pcdn.co/wp-content/uploads/2020/06/MCO_2-984x554.jpg' },
@@ -222,7 +208,7 @@ const redIcon  = svgIcon('#d63e2a');
       return 'Other';
     }
 
-    // ==== Info panel wiring ====
+    // ==== Info panel wiring (nur EINMAL, NACH dem Map-Init!) ====
     const panel = document.getElementById('info-panel');
     const pTitle = document.getElementById('p-title');
     const pLoc = document.getElementById('p-location');
@@ -231,26 +217,24 @@ const redIcon  = svgIcon('#d63e2a');
     const pStatus = document.getElementById('p-status');
     const pNote = document.getElementById('p-note');
     const pLinkWrap = document.getElementById('p-linkwrap');
-    document.getElementById('p-close').addEventListener('click',()=>{ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); });
-    map.on('click', ()=>{ panel.classList.remove('open'); panel.setAttribute('aria-hidden','true'); });
+    const pFlag = document.getElementById('p-flag');
 
-    // ==== Info panel wiring ====
-const panel = document.getElementById('info-panel');
-const pTitle = document.getElementById('p-title');
-const pLoc = document.getElementById('p-location');
-const pIata = document.getElementById('p-iata');
-const pIcao = document.getElementById('p-icao');
-const pStatus = document.getElementById('p-status');
-const pNote = document.getElementById('p-note');
-const pLinkWrap = document.getElementById('p-linkwrap');
-document.getElementById('p-close').addEventListener('click', () => {
-  panel.classList.remove('open');
-  panel.setAttribute('aria-hidden', 'true');
-});
-map.on('click', () => {
-  panel.classList.remove('open');
-  panel.setAttribute('aria-hidden', 'true');
-});
+    document.getElementById('p-close').addEventListener('click',()=>{
+      panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
+    });
+    map.on('click', ()=>{
+      panel.classList.remove('open'); panel.setAttribute('aria-hidden','true');
+    });
+
+    // Flag helper
+    function getFlagEmoji(country) {
+      const flags = {
+        "Germany":"🇩🇪","USA":"🇺🇸","Italy":"🇮🇹","Australia":"🇦🇺","France":"🇫🇷","Netherlands":"🇳🇱","Spain":"🇪🇸","Switzerland":"🇨🇭",
+        "Thailand":"🇹🇭","Japan":"🇯🇵","China":"🇨🇳","Turkey":"🇹🇷","Singapore":"🇸🇬","Qatar":"🇶🇦","UAE":"🇦🇪","United Arab Emirates":"🇦🇪",
+        "South Korea":"🇰🇷","Canada":"🇨🇦","UK":"🇬🇧","United Kingdom":"🇬🇧","Maldives":"🇲🇻"
+      };
+      return flags[country] || "🏳️";
+    }
 
     function showPanel(ap){
       pTitle.textContent = ap.name || 'Airport';
@@ -259,8 +243,9 @@ map.on('click', () => {
       pIcao.textContent  = `ICAO: ${ap.icao||'-'}`;
       pStatus.textContent= `Status: ${ap.status||'unknown'}`;
       pNote.textContent  = ap.note ? String(ap.note) : '';
+      pFlag.textContent  = getFlagEmoji(ap.country || '');
 
-      // Images: support either a single imageUrl or an array imageUrls (up to 2 shown)
+      // Images
       const imgWrap = document.getElementById('p-image');
       if (ap.imageUrls && Array.isArray(ap.imageUrls) && ap.imageUrls.length){
         const imgs = ap.imageUrls.slice(0,2).map(url=>{
@@ -281,6 +266,7 @@ map.on('click', () => {
       if (ap.makerUrl && ap.makerUrl !== '#') {
         pLinkWrap.innerHTML = `<a href="${ap.makerUrl}" target="_blank" rel="noopener">MakerWorld: Print now →</a>`;
       } else { pLinkWrap.innerHTML = ''; }
+
       panel.classList.add('open'); panel.setAttribute('aria-hidden','false');
     }
 
@@ -365,7 +351,7 @@ map.on('click', () => {
     continentSel.addEventListener('change', ()=>applyFilter(searchInput.value));
     resetBtn.addEventListener('click', ()=>{ searchInput.value=''; continentSel.value='all'; applyFilter(''); });
 
-    // ==== Theme toggle (optional) ====
+    // ==== Theme toggle ====
     (function(){
       const btn=document.getElementById('theme-toggle');
       const key='airport-theme';
@@ -383,9 +369,6 @@ map.on('click', () => {
       try{
         console.assert(AIRPORTS.length>=1, 'AIRPORTS should not be empty');
         console.assert(PLANNED_AIRPORTS.length>=1, 'PLANNED_AIRPORTS should not be empty');
-        const hasBlue = !!blueIcon && blueIcon.options && blueIcon.options.iconUrl;
-        const hasRed = !!redIcon && redIcon.options && redIcon.options.iconUrl;
-        console.assert(hasBlue && hasRed, 'colored icons missing');
         console.log('%cSanity checks passed','color:#22c55e');
       }catch(err){ console.warn('Sanity test failed:', err); }
     })();
